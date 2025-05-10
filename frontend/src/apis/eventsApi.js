@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-const BASIC_URL = "https://apocrypha.su"
+const BASIC_URL = "http://localhost:5000/"
 
 export const eventsApi = createApi({
   reducerPath: "eventsApi",

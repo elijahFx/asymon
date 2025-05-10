@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "../imgs/logo.svg";
+import logo from "../imgs/logo2.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,12 +22,12 @@ export default function Header() {
     <header className="fixed top-0 left-0 z-10 bg-white h-[11vh] w-screen flex justify-between items-center px-3.5 shadow-sm">
       <div className="flex items-center gap-2 max-w-[50%] h-full overflow-hidden">
         <Link to="/main" className="flex items-center h-full border-r-2 pr-2">
-        <h1 className="font-bold text-[#0C1B60]">Монополия</h1>
-          {/* <img
+       {/* <h1 className="font-bold text-[#0C1B60]">Монополия</h1>  */} 
+          {<img
             src={logo}
             alt="Логотип"
-            className="h-14 w-14 object-contain cursor-pointer transition-all duration-400 hover:h-16 hover:w-16"
-          />*/}
+            className="ts2 h-14 w-14 object-contain cursor-pointer transition-all duration-400 hover:h-16 hover:w-16"
+          />}
         </Link>
         <div className="flex flex-col justify-center overflow-hidden text-ellipsis">
           <h3 className="text-sm sm:text-base md:text-xl leading-tight truncate">

@@ -3,22 +3,27 @@ const express = require("express");
 const {
   login,
   signup,
-  editUser
+  editUser,
+  getAllUsers,
+  editUserLikeAdmin,
+  deleteSingleUser,
 } = require("../controllers/usersControllers");
-const { getUsersStatistics } = require("../calcs/userStatistics");
 const requireAuth = require("../requireAuth");
 
 const router = express.Router();
 
-router.get("/:id/statistics", requireAuth, getUsersStatistics)
+router.get("/", requireAuth, getAllUsers);
 
 router.post("/login", login);
 
-router.post("/signup", requireAuth, signup);
+router.post("/signup", signup);
 
-router.put("/", requireAuth, editUser)
+router.patch("/adm", requireAuth, editUserLikeAdmin);
 
-router.put("/avatar", requireAuth, editUser)
+router.put("/", requireAuth, editUser);
 
+router.delete("/", requireAuth, deleteSingleUser);
+
+router.put("/avatar", requireAuth, editUser);
 
 module.exports = router;

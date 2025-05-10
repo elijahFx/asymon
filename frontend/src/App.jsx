@@ -2,8 +2,8 @@ import Loader from "./components/Loader";
 import NotFound from "./Components/NotFound";
 import MainPage from "./components/MainPage";
 import Login from "./components/Login";
-import SideBar from "./Components/SideBar";
-import Header from "./Components/Header";
+import SideBar from "./components/SideBar";
+import Header from "./components/Header";
 import CalendarOverview from "./components/Calendar/CalendarOverview";
 import SettingsOverview from "./components/Settings/SettingsOverview";
 import SingleEvent from "./components/SingleEvent/SingleEvent";
@@ -17,6 +17,8 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { logout, setCredentials } from "./slices/authSlice";
+import Signup from "./components/Signup";
+import Verification from "./components/Verification";
 
 
 
@@ -43,7 +45,7 @@ function AppWrapper() {
     }
   }, [dispatch]);
 
-  const pathsWithoutLayout = ["/", "/contract"];
+  const pathsWithoutLayout = ["/", "/contract", "/verification"];
   const isMinimalPage = pathsWithoutLayout.includes(location.pathname);
   
 
@@ -57,6 +59,8 @@ function AppWrapper() {
           <Routes>
             {/* Публичные маршруты */}
             <Route path="/" element={isAuthenticated ? <MainPage /> : <Login />} />
+            <Route path="/signup" element={isAuthenticated ? <MainPage /> : <Signup />} />
+            <Route path="/verification" element={isAuthenticated ? <MainPage /> : <Verification />} />
 
             {/* Условный доступ к маршрутам */}
             <Route path="/main" element={isAuthenticated ? <MainPage /> : <Loader />} />

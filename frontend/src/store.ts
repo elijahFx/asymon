@@ -1,18 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { userApi } from "./apis/userApi";
-import { casesApi } from "./apis/casesApi";
 import { eventsApi } from "./apis/eventsApi";
 import casesReducer from "./slices/casesSlice";
 import authReducer from "./slices/authSlice";
 
-
-
-
 export const store = configureStore({
   reducer: {
     [userApi.reducerPath]: userApi.reducer,
-    [casesApi.reducerPath]: casesApi.reducer,
     [eventsApi.reducerPath]: eventsApi.reducer,
     cases: casesReducer,
     auth: authReducer,
@@ -20,8 +15,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .concat(userApi.middleware)
-      .concat(casesApi.middleware)
-      .concat(eventsApi.middleware)
+      .concat(eventsApi.middleware),
 });
 
 setupListeners(store.dispatch);

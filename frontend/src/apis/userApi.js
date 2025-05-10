@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-const BASIC_URL = "https://apocrypha.su"
+const BASIC_URL = "http://localhost:5000/";
 
 export const userApi = createApi({
   reducerPath: "userApi",
@@ -8,47 +8,49 @@ export const userApi = createApi({
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);
-
       const token = userInfoJSON?.token;
-
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }
       return headers;
     },
   }),
-  tagTypes: ["User"], // Добавляем тег для автоматического обновления данных
+  tagTypes: ["User"],
   endpoints: (builder) => ({
-    // Аутентификация
     login: builder.mutation({
       query: (credentials) => ({
         url: "/users/login",
         method: "POST",
         body: credentials,
       }),
-      invalidatesTags: ["User"], // При логине обновляем данные пользователя
+      invalidatesTags: ["User"],
     }),
 
-    // Получение текущего пользователя
+    signup: builder.mutation({
+      query: (newUserData) => ({
+        url: "/users/signup",
+        method: "POST",
+        body: newUserData,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
     getCurrentUser: builder.query({
       query: () => "/users/me",
-      providesTags: ["User"], // Указываем, что запрос связан с тегом 'User'
+      providesTags: ["User"],
     }),
 
-    // Работа с аватаром
     uploadAvatar: builder.mutation({
       query: (imageFile) => {
         const formData = new FormData();
         formData.append("avatar", imageFile);
-
         return {
           url: "/users/avatar",
           method: "POST",
           body: formData,
-          // Для FormData заголовок Content-Type устанавливается автоматически
         };
       },
-      invalidatesTags: ["User"], // После загрузки обновляем данные пользователя
+      invalidatesTags: ["User"],
     }),
 
     updateUser: builder.mutation({
@@ -67,19 +69,46 @@ export const userApi = createApi({
       }),
       invalidatesTags: ["User"],
     }),
+
     getUsersStatistics: builder.query({
       query: (id) => `users/${id}/statistics`,
-      providesTags: ["User"], // также указываем тег, если нужно обновление
+      providesTags: ["User"],
+    }),
+
+    getAllUsers: builder.query({
+      query: () => "/users",
+      providesTags: ["User"],
+    }),
+
+    editUserLikeAdmin: builder.mutation({
+      query: (userData) => ({
+        url: `/users/adm`,
+        method: "PATCH",
+        body: userData,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: "/users",
+        method: "DELETE",
+        body: { id }, 
+      }),
+      invalidatesTags: ["User"],
     }),
   }),
 });
 
-// Экспортируем хуки для использования в компонентах
 export const {
   useLoginMutation,
+  useSignupMutation,
   useGetCurrentUserQuery,
   useUploadAvatarMutation,
   useUpdateUserMutation,
   useDeleteAvatarMutation,
-  useGetUsersStatisticsQuery
+  useGetUsersStatisticsQuery,
+  useGetAllUsersQuery,
+  useEditUserLikeAdminMutation,
+  useDeleteUserMutation,
 } = userApi;

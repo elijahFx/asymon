@@ -12,9 +12,9 @@ async function signup(req, res) {
   try {
     connection = await createDbConnection();
 
-    const { password, nickname, avatar, status, rank, fullName } = req.body;
+    const { password, nickname } = req.body;
 
-    // Валидация обязательных полей
+    // Проверка обязательных полей
     if (!nickname || !password) {
       return res.status(400).json({ error: "Требуются nickname и пароль" });
     }
@@ -29,44 +29,31 @@ async function signup(req, res) {
       return res.status(409).json({ error: "Пользователь уже существует" });
     }
 
-    // Хеширование пароля
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = uuidv4(); // Генерация UUID
-    const createdAt = new Date().toISOString(); // Текущая дата
+    const userId = uuidv4();
+    const createdAt = new Date().toISOString();
 
-    // Вставка нового пользователя
+    // Вставка нового пользователя с фиксированными значениями
     await connection.query(
-      "INSERT INTO users (id, password, nickname, createdAt, avatar, status, rank, fullName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      `INSERT INTO users (id, password, nickname, createdAt, status, rank, avatar, isVerified)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         hashedPassword,
         nickname,
         createdAt,
-        avatar || null,
-        status || "user",
-        rank || "",
-        fullName,
+        "user",
+        "Сотрудник",
+        null,
+        false,
       ]
     );
 
-    // Создание JWT токена
-    const token = jwt.sign({ id: userId }, process.env.SECRET, {
-      expiresIn: "5h",
-    });
-
-    // Возвращаем данные без хеша пароля
-    return res.status(201).json({
-      user: {
-        id: userId,
-        nickname,
-        createdAt,
-        avatar,
-        status,
-        rank,
-        fullName,
-      },
-      token,
-    });
+    return res
+      .status(201)
+      .json({
+        message: "Пользователь успешно зарегистрирован. Ожидается верификация.",
+      });
   } catch (error) {
     console.error("Signup error:", error);
     return res.status(500).json({ error: "Внутренняя ошибка сервера" });
@@ -88,7 +75,7 @@ async function login(req, res) {
     }
 
     const [users] = await connection.query(
-      "SELECT id, password, nickname, status, avatar, rank, fullName, createdAt FROM users WHERE nickname = ? LIMIT 1",
+      "SELECT id, password, nickname, status, avatar, rank, createdAt, isVerified FROM users WHERE nickname = ? LIMIT 1",
       [nickname]
     );
 
@@ -97,44 +84,18 @@ async function login(req, res) {
     }
 
     const user = users[0];
+
+    // Проверка верификации
+    if (!user.isVerified) {
+      return res
+        .status(403)
+        .json({ error: "Аккаунт не верифицирован. Подождите подтверждения." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Неверные учетные данные" });
     }
-
-    // Кол-во всех дел
-    const [caseCountResult] = await connection.query(
-      "SELECT COUNT(*) AS count FROM cases WHERE responsibleEmployee = ?",
-      [user.fullName]
-    );
-    const caseCount = caseCountResult[0]?.count || 0;
-
-    // Кол-во дел по каждому из 4 нужных статусов
-    const [statusCounts] = await connection.query(
-      `SELECT status, COUNT(*) as count
-       FROM cases
-       WHERE responsibleEmployee = ?
-         AND status IN (?, ?, ?, ?)
-       GROUP BY status`,
-      [
-        user.fullName,
-        "Новое",
-        "Ведется работа по делу",
-        "В архиве",
-        "Вынесено решение (определение)",
-      ]
-    );
-
-    // Преобразуем массив результатов в объект вида { "Новое": 5, ... }
-    const statusCountMap = {
-      "Новое": 0,
-      "Ведется работа по делу": 0,
-      "В архиве": 0,
-      "Вынесено решение (определение)": 0,
-    };
-    statusCounts.forEach(({ status, count }) => {
-      statusCountMap[status] = count;
-    });
 
     const token = jwt.sign({ id: user.id }, process.env.SECRET, {
       expiresIn: "5h",
@@ -146,11 +107,8 @@ async function login(req, res) {
       status: user.status,
       avatar: user.avatar,
       rank: user.rank,
-      fullName: user.fullName,
       createdAt: user.createdAt || "нет",
       token,
-      caseCount,
-      caseStatuses: statusCountMap,
     };
 
     return res.status(200).json(userResponse);
@@ -162,8 +120,6 @@ async function login(req, res) {
   }
 }
 
-
-
 async function editUser(req, res) {
   let connection;
 
@@ -171,16 +127,16 @@ async function editUser(req, res) {
     // 1. Проверка авторизации
     const token = req.headers.authorization?.split(" ")[1];
     console.log(token);
-    
+
     if (!token) return res.status(401).json({ error: "Требуется авторизация" });
 
     const decoded = jwt.verify(token, process.env.SECRET);
     const userId = decoded.id;
 
-    const { fullName, rank, avatar: image, status, nickname } = req.body;
+    const { rank, avatar: image, status, nickname } = req.body;
 
     // 2. Если нечего обновлять
-    if (!image && !fullName && !rank && !status && !nickname) {
+    if (!image && !rank && !status && !nickname) {
       return res
         .status(400)
         .json({ error: "Не указаны данные для обновления" });
@@ -203,7 +159,6 @@ async function editUser(req, res) {
 
     // 4. Обновляем данные пользователя
     const updateData = {
-      ...(fullName && { fullName }),
       ...(rank && { rank }),
       ...(status && { status }),
       ...(nickname && { nickname }),
@@ -217,7 +172,7 @@ async function editUser(req, res) {
 
     // 5. Возвращаем обновлённого пользователя
     const [updatedUser] = await connection.query(
-      "SELECT id, nickname, fullName, avatar, status, rank FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, nickname, avatar, status, rank FROM users WHERE id = ? LIMIT 1",
       [userId]
     );
 
@@ -235,8 +190,136 @@ async function editUser(req, res) {
   }
 }
 
+async function editUserLikeAdmin(req, res) {
+  let connection;
+
+  try {
+    // 1. Авторизация
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Требуется авторизация" });
+
+    const decoded = jwt.verify(token, process.env.SECRET);
+    const adminId = decoded.id;
+
+    // 2. Данные из тела запроса
+    const { id, status, rank, isVerified } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Не указан id пользователя" });
+    }
+
+    // 3. Открываем соединение с БД
+    connection = await createDbConnection();
+
+    // 4. Проверяем, существует ли пользователь
+    const [users] = await connection.query("SELECT id FROM users WHERE id = ? LIMIT 1", [id]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    // 5. Собираем данные для обновления
+    const updateData = {};
+    if (status !== undefined) updateData.status = status;
+    if (rank !== undefined) updateData.rank = rank;
+    if (isVerified !== undefined) updateData.isVerified = isVerified ? 1 : 0;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "Нет данных для обновления" });
+    }
+
+    // 6. Обновляем пользователя
+    await connection.query("UPDATE users SET ? WHERE id = ?", [updateData, id]);
+
+    // 7. Получаем обновлённого пользователя
+    const [updatedUser] = await connection.query(
+      "SELECT id, nickname, status, rank, isVerified FROM users WHERE id = ? LIMIT 1",
+      [id]
+    );
+
+    return res.status(200).json({ message: "Пользователь обновлён", user: updatedUser[0] });
+  } catch (error) {
+    console.error("Ошибка при обновлении пользователя админом:", error);
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Недействительный токен" });
+    }
+
+    return res.status(500).json({ error: "Ошибка сервера" });
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
+
+async function getAllUsers(req, res) {
+  let connection;
+
+  try {
+    connection = await createDbConnection();
+
+    // Получаем всех пользователей, исключая sensitive данные (пароль)
+    const [users] = await connection.query(
+      "SELECT id, nickname, avatar, status, rank, isVerified, createdAt FROM users"
+    );
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Get all users error:", error);
+    return res.status(500).json({ error: "Внутренняя ошибка сервера" });
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
+async function deleteSingleUser(req, res) {
+  let connection;
+
+  try {
+    // 1. Авторизация
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Требуется авторизация" });
+
+    const decoded = jwt.verify(token, process.env.SECRET);
+    const adminId = decoded.id;
+
+    // 2. Данные из тела запроса
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Не указан id пользователя" });
+    }
+
+    // 3. Открываем соединение с БД
+    connection = await createDbConnection();
+
+    // 4. Проверяем, существует ли пользователь
+    const [users] = await connection.query("SELECT id FROM users WHERE id = ? LIMIT 1", [id]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    // 5. Удаляем пользователя
+    await connection.query("DELETE FROM users WHERE id = ?", [id]);
+
+    return res.status(200).json({ message: "Пользователь успешно удалён" });
+  } catch (error) {
+    console.error("Ошибка при удалении пользователя:", error);
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Недействительный токен" });
+    }
+
+    return res.status(500).json({ error: "Ошибка сервера" });
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
 module.exports = {
   signup,
   login,
   editUser,
+  getAllUsers,
+  editUserLikeAdmin,
+  deleteSingleUser
 };

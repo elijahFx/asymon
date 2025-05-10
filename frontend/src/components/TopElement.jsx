@@ -20,27 +20,10 @@ export default function TopElement({ type = "cases" }) {
   });
 
   useEffect(() => {
-    if (type === "cases") {
-      setName("Дела");
-    } else if (type === "in_corr") {
-      setName("Входящая корреспонденция");
-      setIcon({ icon: <FileCode className="w-6 h-6 text-blue-600" /> });
-    } else if (type === "out_corr") {
-      setName("Исходящая корреспонденция");
-      setIcon({ icon: <Send className="w-6 h-6 text-blue-600" /> });
-    } else if (type === "calendar") {
-      setName("Календарь");
+    if (type === "calendar") {
+      setName("Мероприятия");
       setIcon({ icon: <Calendar className="w-6 h-6 text-blue-600" /> });
-    } else if (type === "claims") {
-      setName("Конструктор претензий");
-      setIcon({ icon: <ShieldAlert className="w-6 h-6 text-blue-600" /> });
-    } else if (type === "finance") {
-      setName("Финансы/поступления денежных средств");
-      setIcon({ icon: <CircleDollarSign className="w-6 h-6 text-blue-600" /> });
-    } else if (type === "appeals") {
-      setName("Обращения/заметки");
-      setIcon({ icon: <Pen className="w-6 h-6 text-blue-600" /> });
-    }
+    } 
   }, []);
 
   function handleClick() {

@@ -162,8 +162,8 @@ const SingleEvent = ({ type = "view" }) => {
           {mode === "view"
             ? "Событие"
             : mode === "edit"
-            ? "Редактирование события"
-            : "Добавить новое событие"}
+            ? "Редактирование мероприятия"
+            : "Добавить новое мероприятие"}
         </h2>
 
         {mode === "view" ? (
@@ -230,7 +230,7 @@ const SingleEvent = ({ type = "view" }) => {
               onChange={handleTypeChange}
               className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
             >
-              <option value="">Выберите тип события</option>
+              <option value="">Выберите тип мероприятия</option>
               <option value="Дежурство">Дежурство</option>
               <option value="Судебное заседание">Судебное заседание</option>
             </select>

@@ -1,34 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLoginMutation } from "../apis/userApi";
 import { useDispatch } from "react-redux";
+import { useSignupMutation } from "../apis/userApi";
 import { setCredentials, setError } from "../slices/authSlice";
 import Loader from "./Loader";
 import { Link } from "react-router-dom";
 
-const Login = () => {
+const Signup = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [login, { isLoading }] = useLoginMutation();
+  const [signup, { isLoading }] = useSignupMutation();
 
   const [formData, setFormData] = useState({
     nickname: "",
     password: "",
+    confirmPassword: "",
   });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const userData = await login(formData).unwrap();
-      dispatch(setCredentials(userData));
-      navigate("/main");
-    } catch (err) {
-      dispatch(setError(err.data?.message || "Ошибка при входе"));
-      if (err.status === 403) {
-        navigate("/verification");
-      }
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,22 +25,34 @@ const Login = () => {
     }));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      dispatch(setError("Пароли не совпадают"));
+      return;
+    }
+    try {
+      const userData = await signup({
+        nickname: formData.nickname,
+        password: formData.password,
+      }).unwrap();
+      navigate("/verification");
+    } catch (err) {
+      dispatch(setError(err.data?.message || "Ошибка при регистрации"));
+    }
+  };
+
   return (
     <>
       {isLoading && <Loader />}
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
           <div className="flex flex-col items-center">
-            {/*<img
-            src={logo}
-            alt="Логотип"
-            className="h-34 w-34 max-h-full object-contain cursor-pointer select-none transition-all duration-400 mb-4"
-          /> */}
             <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
-              Добро пожаловать
+              Регистрация
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Введите логин и пароль
+              Введите данные для создания аккаунта
             </p>
           </div>
 
@@ -74,6 +73,7 @@ const Login = () => {
                   onChange={handleChange}
                 />
               </div>
+
               <div>
                 <label htmlFor="password" className="sr-only">
                   Пароль
@@ -89,6 +89,22 @@ const Login = () => {
                   onChange={handleChange}
                 />
               </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="sr-only">
+                  Подтвердите пароль
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0C1B60] focus:border-transparent"
+                  placeholder="Подтвердите пароль"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             <div>
@@ -99,17 +115,14 @@ const Login = () => {
                   isLoading ? "opacity-70 cursor-not-allowed" : ""
                 }`}
               >
-                {isLoading ? "Вход..." : "Войти"}
+                {isLoading ? "Регистрация..." : "Зарегистрироваться"}
               </button>
             </div>
           </form>
           <p className="mt-2 text-center text-sm text-gray-600">
-            У Вас еще нет аккаунта?{" "}
-            <Link
-              className="text-blue-600 underline cursor-pointer"
-              to="/signup"
-            >
-              Зарегистрироваться
+            У Вас уже есть аккаунт?{" "}
+            <Link className="text-blue-600 underline cursor-pointer" to="/">
+              Войти
             </Link>
           </p>
         </div>
@@ -118,4 +131,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;

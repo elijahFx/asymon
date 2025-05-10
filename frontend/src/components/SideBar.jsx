@@ -1,15 +1,9 @@
 import { useState } from "react";
 import {
-  ShieldAlert,
-  LayoutDashboard,
-  Pen,
   Settings,
   ChevronLeft,
   ChevronRight,
-  CircleDollarSign,
-  FileCode,
   Calendar,
-  Send,
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -18,7 +12,7 @@ const SideBar = () => {
 
   const menuItems = [
     {
-      label: "Календарь",
+      label: "Мероприятия",
       icon: <Calendar color="#0C1B60" />,
       link: "/calendar",
     },

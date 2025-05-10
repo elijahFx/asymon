@@ -7,6 +7,8 @@ import {
 } from "../apis/userApi";
 import { setCredentials } from "../slices/authSlice";
 import { formatDate } from "../utils/dates";
+import UsersTable from "./UsersTable/UsersTable";
+import userList from "../utils/userList";
 
 const ranks = [
   "Председатель Правления",
@@ -20,8 +22,8 @@ const ranks = [
 const statuses = ["user", "admin"];
 
 const Account = () => {
-  const createdAt = useSelector((state) => state.auth.createdAt)
-  const dispatch = useDispatch()
+  const createdAt = useSelector((state) => state.auth.createdAt);
+  const dispatch = useDispatch();
   const userData = useSelector((state) => state.auth);
   const [uploadAvatar] = useUploadAvatarMutation();
   const [updateUser] = useUpdateUserMutation();
@@ -52,13 +54,13 @@ const Account = () => {
         nickname: user.nickname,
       });
 
-     const result = await updateUser({
+      const result = await updateUser({
         fullName: user.fullName,
         rank: user.rank,
         status: user.status,
         nickname: user.nickname,
       }).unwrap();
-      dispatch(setCredentials(result))
+      dispatch(setCredentials(result));
       setEditMode(false);
     } catch (error) {
       console.error("Ошибка обновления:", error);
@@ -186,12 +188,12 @@ const Account = () => {
         </div>
       </div>
 
-      {/* Users Table (в будущем) */}
-      <div className="mt-10 flex-1">
-        <div className="text-center text-gray-500 dark:text-gray-400 italic">
-          Здесь скоро будет таблица пользователей (UsersTable)
-        </div>
-      </div>
+      <UsersTable
+        users={userList}
+        onUpdate={(updatedUser) => console.log("Обновить", updatedUser)}
+        onDelete={(id) => console.log("Удалить пользователя с ID:", id)}
+      />
+      
     </div>
   );
 };
