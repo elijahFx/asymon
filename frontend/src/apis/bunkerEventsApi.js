@@ -1,8 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-const BASIC_URL = "http://localhost:5000/"
 
-export const eventsApi = createApi({
-  reducerPath: "eventsApi",
+const BASIC_URL = "http://localhost:5000/";
+
+export const bunkerEventsApi = createApi({
+  reducerPath: "bunkerEventsApi",
   baseQuery: fetchBaseQuery({
     baseUrl: BASIC_URL,
     prepareHeaders: (headers) => {
@@ -19,44 +20,44 @@ export const eventsApi = createApi({
   }),
   tagTypes: ["Events"],
   endpoints: (builder) => ({
-    getEvents: builder.query({
-      query: () => "/events",
+    getBunkerEvents: builder.query({
+      query: () => "/bunker",
       providesTags: ["Events"],
     }),
-    addEvent: builder.mutation({
+    getSingleBunkerEvent: builder.query({
+      query: (id) => `/bunker/${id}`,
+      providesTags: ["Events"],
+    }),
+    addBunkerEvent: builder.mutation({
       query: (newEvent) => ({
-        url: "/events",
+        url: "/bunker",
         method: "POST",
         body: newEvent,
       }),
       invalidatesTags: ["Events"],
     }),
-    updateEvent: builder.mutation({
+    updateBunkerEvent: builder.mutation({
       query: ({ id, ...updatedEvent }) => ({
-        url: `/events/${id}`,
+        url: `/bunker/${id}`,
         method: "PUT",
         body: updatedEvent,
       }),
       invalidatesTags: ["Events"],
     }),
-    getSingleEvent: builder.query({
-      query: (id) => `/events/${id}`,
-      providesTags: ["Events"],
-    }),
-    getEventsByDate: builder.query({
-      query: (date) => ({
-        url: `/events/dates`,
-        method: "GET",
-        params: { date },
+    deleteBunkerEvent: builder.mutation({
+      query: (id) => ({
+        url: `/bunker/${id}`,
+        method: "DELETE",
       }),
+      invalidatesTags: ["Events"],
     }),
   }),
 });
 
 export const {
-  useGetEventsQuery,
-  useGetSingleEventQuery,
-  useGetEventsByDateQuery,
-  useAddEventMutation,
-  useUpdateEventMutation,
-} = eventsApi;
+  useGetBunkerEventsQuery,
+  useGetSingleBunkerEventQuery,
+  useAddBunkerEventMutation,
+  useUpdateBunkerEventMutation,
+  useDeleteBunkerEventMutation,
+} = bunkerEventsApi;

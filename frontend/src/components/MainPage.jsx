@@ -1,31 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { getTodayDate } from "../utils/dates";
-import { useNavigate } from "react-router";
-import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment from "moment";
+import { useLocation, useNavigate } from "react-router";
+import { Calendar } from "react-big-calendar";
 import { demoEvents } from "../utils/db";
+import { localizer, messages, calendarFormats } from "../utils/calendarConfig";
+import { Link } from "react-router-dom";
 
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.scss";
-
-moment.locale("ru", {
-  months:
-    "Январь_Февраль_Март_Апрель_Май_Июнь_Июль_Август_Сентябрь_Октябрь_Ноябрь_Декабрь".split(
-      "_"
-    ),
-  monthsShort: "янв_фев_мар_апр_май_июн_июл_авг_сен_окт_ноя_дек".split("_"),
-  weekdays:
-    "воскресенье_понедельник_вторник_среда_четверг_пятница_суббота".split("_"),
-  weekdaysShort: "вс_пн_вт_ср_чт_пт_сб".split("_"),
-  weekdaysMin: "вс_пн_вт_ср_чт_пт_сб".split("_"),
-});
-
-const localizer = momentLocalizer(moment);
+import Legend from "./Legend";
 
 export default function MainPage() {
   const DnDCalendar = withDragAndDrop(Calendar);
+  const location = useLocation();
+  console.log(location.pathname);
 
   const navigate = useNavigate();
   const [today, setToday] = useState(getTodayDate());
@@ -33,7 +23,7 @@ export default function MainPage() {
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState("month");
 
- /* const {
+  /* const {
     data: eventsData,
     isLoading: eventsLoading,
     error: eventsError,
@@ -97,26 +87,26 @@ export default function MainPage() {
     });
   };
 
-  const messages = {
-    today: "Сегодня",
-    previous: "Назад",
-    next: "Вперед",
-    month: "Месяц",
-    week: "Неделя",
-    day: "День",
-    agenda: "Повестка",
-    date: "Дата",
-    time: "Время",
-    event: "Событие",
-    noEventsInRange: "Нет событий в этом диапазоне.",
-    showMore: (total) => `+ Ещё ${total}`,
-  };
-
   return (
     <div className="flex flex-row flex-1">
       <main className="flex-1 bg-[#F0F2F5] p-4 overflow-auto mt-[11vh] gap-5 flex flex-col">
         <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex justify-end mb-2">
+            <Link
+              to="/add"
+              className="text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-full text-l shadow-md transition"
+              title="Добавить событие"
+            >
+              +
+            </Link>
+          </div>
+          <h2 className="text-3xl font-bold text-red-600 mb-4 text-center">
+            Монополия
+          </h2>
           <DnDCalendar
+            min={new Date(0, 0, 0, 0, 0)}
+            max={new Date(0, 0, 0, 23, 59)}
+            formats={calendarFormats}
             localizer={localizer}
             events={allEvents}
             startAccessor="start"
@@ -143,6 +133,7 @@ export default function MainPage() {
             }}
           />
         </div>
+        <Legend />
       </main>
     </div>
   );

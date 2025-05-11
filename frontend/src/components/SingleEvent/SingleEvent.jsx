@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Pen, Check, X, Plus } from "lucide-react";
-import {
+/*import {
   useAddEventMutation,
   useGetSingleEventQuery,
   useUpdateEventMutation,
-} from "../../apis/eventsApi";
+} from "../../apis/monopolyEventsApi";*/
 import { useSelector } from "react-redux";
 import { useParams } from "react-router";
 

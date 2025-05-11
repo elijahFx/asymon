@@ -4,6 +4,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  ShieldUser,
+  Citrus
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -12,9 +14,19 @@ const SideBar = () => {
 
   const menuItems = [
     {
-      label: "Мероприятия",
-      icon: <Calendar color="#0C1B60" />,
-      link: "/calendar",
+      label: "Монополия",
+      icon: <Calendar color="red" />,
+      link: "/main",
+    },
+    {
+      label: "Джуманджи",
+      icon: <Citrus color="green" />,
+      link: "/jungle",
+    },
+    {
+      label: "Бункер",
+      icon: <ShieldUser color="gold" />,
+      link: "/bunker",
     },
     {
       label: "Настройки системы",

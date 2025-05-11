@@ -1,10 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useGetEventsQuery } from "../../apis/eventsApi";
 import { formatDateFromLinesToDots } from "../../utils/dates";
 
 export default function CalendarTable() {
-  const { data: eventsList, isLoading, error } = useGetEventsQuery();
 
   const id = `1`;
 

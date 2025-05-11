@@ -35,7 +35,7 @@ const Account = () => {
     rank: userData.rank,
     status: userData.status,
     createdAt: "2024-12-01",
-    avatarUrl: userData.avatar,
+    avatarUrl: userData.avatar || `https://t3.ftcdn.net/jpg/05/16/27/58/360_F_516275801_f3Fsp17x6HQK0xQgDQEELoTuERO4SsWV.jpg`,
     fullName: userData.fullName,
   });
 
@@ -129,30 +129,6 @@ const Account = () => {
                 className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
                 placeholder="Nickname"
               />
-
-              <select
-                value={user.rank}
-                onChange={(e) => handleChange("rank", e.target.value)}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-              >
-                {ranks.map((rank) => (
-                  <option key={rank} value={rank}>
-                    {rank}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={user.status}
-                onChange={(e) => handleChange("status", e.target.value)}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
             </div>
           ) : (
             <>
@@ -163,10 +139,7 @@ const Account = () => {
                 ID: {user.id}
               </p>
               <p className="text-lg text-gray-800 dark:text-gray-300">
-                <span className="font-medium">ФИО:</span> {user.fullName}
-              </p>
-              <p className="text-lg text-gray-800 dark:text-gray-300">
-                <span className="font-medium">Ранг:</span> {user.rank}
+                <span className="font-medium">Должность:</span> {user.rank}
               </p>
               <p className="text-lg text-gray-800 dark:text-gray-300">
                 <span className="font-medium">Статус:</span>{" "}
@@ -187,13 +160,13 @@ const Account = () => {
           )}
         </div>
       </div>
-
-      <UsersTable
-        users={userList}
-        onUpdate={(updatedUser) => console.log("Обновить", updatedUser)}
-        onDelete={(id) => console.log("Удалить пользователя с ID:", id)}
-      />
-      
+      {userData.status === "admin" && (
+        <UsersTable
+          users={userList}
+          onUpdate={(updatedUser) => console.log("Обновить", updatedUser)}
+          onDelete={(id) => console.log("Удалить пользователя с ID:", id)}
+        />
+      )}
     </div>
   );
 };

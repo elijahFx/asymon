@@ -19,6 +19,9 @@ import { useEffect } from "react";
 import { logout, setCredentials } from "./slices/authSlice";
 import Signup from "./components/Signup";
 import Verification from "./components/Verification";
+import JungleMainPage from "./components/JungleMainPage";
+import BunkerMainPage from "./components/BunkerMainPage";
+import AddEvent from "./components/AddEvent";
 
 
 
@@ -64,6 +67,9 @@ function AppWrapper() {
 
             {/* Условный доступ к маршрутам */}
             <Route path="/main" element={isAuthenticated ? <MainPage /> : <Loader />} />
+            <Route path="/add" element={isAuthenticated ? <AddEvent /> : <Loader />} />
+            <Route path="/jungle" element={isAuthenticated ? <JungleMainPage /> : <Loader />} />
+            <Route path="/bunker" element={isAuthenticated ? <BunkerMainPage /> : <Loader />} />
             <Route path="/calendar" element={isAuthenticated ? <CalendarOverview /> : <Login />} />
             <Route path="/settings" element={isAuthenticated ? <SettingsOverview /> : <Login />} />
             <Route path="/event/+" element={isAuthenticated ? <SingleEvent type="add" /> : <Login />} />
