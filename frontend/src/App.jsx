@@ -55,9 +55,9 @@ function AppWrapper() {
   return (
     <div className="box-border m-0 p-0 overflow-x-hidden">
       <div className="flex flex-col h-screen">
-        {!isMinimalPage && isAuthenticated && <Header />}
+        {!isMinimalPage && !isAuthenticated && <Header />}
         <div className={isMinimalPage || !isAuthenticated ? "" : "flex flex-row flex-1"}>
-          {!isMinimalPage && isAuthenticated && <SideBar />}
+          {!isMinimalPage && !isAuthenticated && <SideBar />}
 
           <Routes>
             {/* Публичные маршруты */}
@@ -67,7 +67,7 @@ function AppWrapper() {
 
             {/* Условный доступ к маршрутам */}
             <Route path="/main" element={isAuthenticated ? <MainPage /> : <Loader />} />
-            <Route path="/add" element={isAuthenticated ? <AddEvent /> : <Loader />} />
+            <Route path="/add" element={!isAuthenticated ? <AddEvent /> : <Loader />} />
             <Route path="/jungle" element={isAuthenticated ? <JungleMainPage /> : <Loader />} />
             <Route path="/bunker" element={isAuthenticated ? <BunkerMainPage /> : <Loader />} />
             <Route path="/calendar" element={isAuthenticated ? <CalendarOverview /> : <Login />} />
