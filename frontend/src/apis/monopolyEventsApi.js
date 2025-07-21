@@ -1,11 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
-const BASIC_URL = "http://localhost:5000/";
+import { BASIC_URL } from "./userApi";
 
 export const monopolyEventsApi = createApi({
   reducerPath: "monopolyEventsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: BASIC_URL,
+    baseUrl: `https://coursehunters.by/`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);
@@ -39,7 +38,7 @@ export const monopolyEventsApi = createApi({
     updateMonopolyEvent: builder.mutation({
       query: ({ id, ...updatedEvent }) => ({
         url: `/monopoly/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body: updatedEvent,
       }),
       invalidatesTags: ["Events"],
@@ -51,6 +50,11 @@ export const monopolyEventsApi = createApi({
       }),
       invalidatesTags: ["Events"],
     }),
+
+    getEventsFromAll: builder.query({
+      query: () => "/monopoly/all",
+      providesTags: ["Events"],
+    }),
   }),
 });
 
@@ -60,4 +64,5 @@ export const {
   useAddMonopolyEventMutation,
   useUpdateMonopolyEventMutation,
   useDeleteMonopolyEventMutation,
+  useGetEventsFromAllQuery
 } = monopolyEventsApi;

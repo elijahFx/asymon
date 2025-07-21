@@ -4,8 +4,6 @@ import MainPage from "./components/MainPage";
 import Login from "./components/Login";
 import SideBar from "./components/SideBar";
 import Header from "./components/Header";
-import CalendarOverview from "./components/Calendar/CalendarOverview";
-import SettingsOverview from "./components/Settings/SettingsOverview";
 import SingleEvent from "./components/SingleEvent/SingleEvent";
 import Account from "./components/Account";
 import {
@@ -19,11 +17,14 @@ import { useEffect } from "react";
 import { logout, setCredentials } from "./slices/authSlice";
 import Signup from "./components/Signup";
 import Verification from "./components/Verification";
-import JungleMainPage from "./components/JungleMainPage";
-import BunkerMainPage from "./components/BunkerMainPage";
 import AddEvent from "./components/AddEvent";
-
-
+import List from "./components/List/List";
+import SMSPage from "./components/SMSs/SMSPage";
+import { ToastContainer } from "react-toastify";
+import WaitingElement from "./components/WaitingList/WaitingElement";
+import WaitingList from "./components/WaitingList/WaitingList";
+import AddWaitingList from "./components/WaitingList/AddWaitingList";
+import SMSOverview from "./components/SMSs/SMSOverview";
 
 
 function AppWrapper() {
@@ -53,35 +54,51 @@ function AppWrapper() {
   
 
   return (
-    <div className="box-border m-0 p-0 overflow-x-hidden">
+    <div className="box-border m-0 ">
       <div className="flex flex-col h-screen">
-        {!isMinimalPage && !isAuthenticated && <Header />}
+        {!isMinimalPage && isAuthenticated && <Header />}
         <div className={isMinimalPage || !isAuthenticated ? "" : "flex flex-row flex-1"}>
-          {!isMinimalPage && !isAuthenticated && <SideBar />}
+          {!isMinimalPage && isAuthenticated && <SideBar />}
 
           <Routes>
+          
             {/* Публичные маршруты */}
             <Route path="/" element={isAuthenticated ? <MainPage /> : <Login />} />
             <Route path="/signup" element={isAuthenticated ? <MainPage /> : <Signup />} />
             <Route path="/verification" element={isAuthenticated ? <MainPage /> : <Verification />} />
 
             {/* Условный доступ к маршрутам */}
-            <Route path="/main" element={isAuthenticated ? <MainPage /> : <Loader />} />
-            <Route path="/add" element={!isAuthenticated ? <AddEvent /> : <Loader />} />
-            <Route path="/jungle" element={isAuthenticated ? <JungleMainPage /> : <Loader />} />
-            <Route path="/bunker" element={isAuthenticated ? <BunkerMainPage /> : <Loader />} />
-            <Route path="/calendar" element={isAuthenticated ? <CalendarOverview /> : <Login />} />
-            <Route path="/settings" element={isAuthenticated ? <SettingsOverview /> : <Login />} />
-            <Route path="/event/+" element={isAuthenticated ? <SingleEvent type="add" /> : <Login />} />
-            <Route path="/event/:number" element={isAuthenticated ? <SingleEvent type="view" /> : <Login />} />
+            <Route path="/main" element={isAuthenticated ? <MainPage type="monopoly" /> : <Loader />} />
+            <Route path="/add" element={isAuthenticated ? <AddEvent /> : <Loader />} />
+            <Route path="/jungle" element={isAuthenticated ? <MainPage type="jungle" /> : <Loader />} />
+            <Route path="/jungle/event/:id" element={isAuthenticated ? <SingleEvent type="view" place="jungle" /> : <Login />} />
+            <Route path="/bunker/event/:id" element={isAuthenticated ? <SingleEvent type="view" place="bunker"/> : <Login />} />
+            <Route path="/bunker" element={isAuthenticated ? <MainPage type="bunker" /> : <Loader />} />
+            <Route path="/list" element={isAuthenticated ? <List /> : <Login />} />
+            <Route path="/event/:id" element={isAuthenticated ? <SingleEvent type="view" /> : <Login />} />
+            <Route path="/sms" element={isAuthenticated ? <SMSOverview /> : <Login />} />
             <Route path="/loader" element={isAuthenticated ? <Loader /> : <Login />} />
             <Route path="/account" element={isAuthenticated ? <Account /> : <Login />} />
+
+
+            <Route path="/waitings/add" element={isAuthenticated ? <AddWaitingList place="waitings" /> : <Login />} />
+            <Route path="/views/add" element={isAuthenticated ? <AddWaitingList place="views" /> : <Login />} />
+            <Route path="/waitings/:id" element={isAuthenticated ? <WaitingElement place="waitings" /> : <Login />} />
+            <Route path="/views" element={isAuthenticated ? <WaitingList place="views"/> : <Login />} />
+
+            <Route path="/waitings" element={isAuthenticated ? <WaitingList place="waitings" /> : <Login />} />
+            
+        
+            
+            <Route path="/views/:id" element={isAuthenticated ? <WaitingElement place="views" /> : <Login />} />
+           
 
             {/* 404 */}
             <Route path="/*" element={<NotFound />} />
           </Routes>
         </div>
       </div>
+     
     </div>
   );
 }
@@ -91,6 +108,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppWrapper />
+       <ToastContainer />
     </BrowserRouter>
   );
 }

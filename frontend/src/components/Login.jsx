@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { setCredentials, setError } from "../slices/authSlice";
 import Loader from "./Loader";
 import { Link } from "react-router-dom";
+import logo from "../../src/imgs/logo.svg"
 
 const Login = () => {
   const navigate = useNavigate();
@@ -44,11 +45,11 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
           <div className="flex flex-col items-center">
-            {/*<img
-            src={logo}
-            alt="Логотип"
-            className="h-34 w-34 max-h-full object-contain cursor-pointer select-none transition-all duration-400 mb-4"
-          /> */}
+            <img
+              src={logo}
+              alt="Логотип"
+              className="h-36 w-36 max-h-full object-contain cursor-pointer select-none transition-all duration-400 mb-4"
+            />{" "}
             <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
               Добро пожаловать
             </h2>

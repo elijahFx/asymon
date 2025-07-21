@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
-* From Uiverse.io by G4b413l */
-.three-body {
+* From Uiverse.io by G4b413l */ .three-body {
   --uib-size: 35px;
   --uib-speed: 0.8s;
   --uib-color: #0c1b60;
@@ -120,7 +119,7 @@ input[type="number"] {
 }
 
 .event-day {
-  background-color: #0C1B60 !important;
+  background-color: #0c1b60 !important;
   color: white !important;
   transition: 0.4s;
 }
@@ -128,4 +127,11 @@ input[type="number"] {
 .event-day:hover {
   background-color: #041253 !important;
   transition: 0.4s;
+}
+
+.Toastify__toast {
+  max-width: fit-content;
+  min-width: fit-content;
+  width: 100%;
+  word-wrap: break-word;
 }

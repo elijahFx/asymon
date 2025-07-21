@@ -32,38 +32,70 @@ export function getTodayDateFormatted() {
 
 export function formatDate(isoString) {
   const date = new Date(isoString);
-  
+
   // Получаем компоненты даты
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы 0-11
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Месяцы 0-11
   const year = date.getFullYear();
-  
+
   return `${day}.${month}.${year}`;
 }
 
-
 export function formatDateFromLinesToDots(inputDate) {
   // Разбиваем строку на части по разделителю '-'
-  const parts = inputDate.split('-');
-  
+  const parts = inputDate?.split("-");
+
   // Проверяем, что дата имеет правильный формат
-  if (parts.length !== 3) {
-    return inputDate
+  if (parts?.length !== 3) {
+    return inputDate;
   }
-  
+
   const [year, month, day] = parts;
-  
+
   // Собираем дату в новом формате
   return `${day}.${month}.${year}`;
 }
 
 export function getTodayDate() {
   const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0'); // Добавляем ведущий ноль
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Месяцы 0-11
+  const day = String(today.getDate()).padStart(2, "0"); // Добавляем ведущий ноль
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // Месяцы 0-11
   const year = today.getFullYear();
-  
+
   return `${day}.${month}.${year}`;
 }
 
+export function isOverlapping(start, end, eventId = null, allEvents) {
+  return allEvents.some((event) => {
+    if (event.id === eventId) return false;
+    return start < event.end && end > event.start;
+  });
+}
 
+// dates.js
+export function parseDateString(dateStr) {
+  // Если дата в формате "YYYY-MM-DD"
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date(dateStr);
+  }
+  
+  // Если дата в формате "DD.MM.YYYY"
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+    const [day, month, year] = dateStr.split('.');
+    return new Date(`${year}-${month}-${day}`);
+  }
+  
+  // Если дата в формате "DD/MM/YYYY"
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    const [day, month, year] = dateStr.split('/');
+    return new Date(`${year}-${month}-${day}`);
+  }
+  
+  // Если это уже Date объект
+  if (dateStr instanceof Date) {
+    return dateStr;
+  }
+  
+  // По умолчанию пытаемся создать Date
+  return new Date(dateStr);
+}

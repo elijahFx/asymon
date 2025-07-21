@@ -8,18 +8,6 @@ import {
 import { setCredentials } from "../slices/authSlice";
 import { formatDate } from "../utils/dates";
 import UsersTable from "./UsersTable/UsersTable";
-import userList from "../utils/userList";
-
-const ranks = [
-  "Председатель Правления",
-  "Заместитель Председателя Правления",
-  "Ведущий юрисконсульт",
-  "Начальник юридического отдела",
-  "Заместитель начальника юридического отдела",
-  "Юрисконсульт",
-];
-
-const statuses = ["user", "admin"];
 
 const Account = () => {
   const createdAt = useSelector((state) => state.auth.createdAt);
@@ -162,7 +150,6 @@ const Account = () => {
       </div>
       {userData.status === "admin" && (
         <UsersTable
-          users={userList}
           onUpdate={(updatedUser) => console.log("Обновить", updatedUser)}
           onDelete={(id) => console.log("Удалить пользователя с ID:", id)}
         />

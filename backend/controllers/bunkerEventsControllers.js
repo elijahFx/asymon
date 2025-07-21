@@ -1,7 +1,6 @@
 const { v4: uuidv4 } = require("uuid");
 const createDbConnection = require("../db");
 
-// Получение всех событий
 const getAllEvents = async (req, res) => {
   let connection;
   try {
@@ -60,6 +59,7 @@ const addEvent = async (req, res) => {
       messenger,
       messengerNickname,
       isAmeteur,
+      isPaid,
       user_id,
       childrenTariff,
       childrenAmount,
@@ -68,63 +68,242 @@ const addEvent = async (req, res) => {
       peopleTariff,
       discount,
       prepayment,
+      isBirthday,
+      isExtr,
+      childPlan,
+      childAge,
+      additionalTime,
+      adultsWithChildrenAmount,
     } = req.body;
 
+    // Проверка на пересечение времен
+    const [existingEvents] = await connection.execute(
+      `SELECT id, start, end FROM bunker_events 
+       WHERE date = ? AND (
+         (start < ? AND end > ?) OR      -- Проверка пересечения
+         (start < ? AND end > ?) OR      -- Проверка вложенности
+         (start >= ? AND end <= ?)       -- Проверка полного совпадения
+       )`,
+      [date, end, start, start, end, start, end]
+    );
+
+    if (existingEvents.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "на это время уже есть запись в Бункере",
+      });
+    }
+
+    // Проверка 30-минутных буферов
+    const startTime = new Date(`${date}T${start}`);
+    const endTime = new Date(`${date}T${end}`);
+
+    const bufferStart = new Date(startTime.getTime() - 30 * 60000)
+      .toISOString()
+      .substr(11, 8);
+    const bufferEnd = new Date(endTime.getTime() + 30 * 60000)
+      .toISOString()
+      .substr(11, 8);
+
+    const [bufferConflicts] = await connection.execute(
+      `SELECT id FROM bunker_events 
+       WHERE date = ? AND (
+         (start < ? AND end > ?) OR      -- Проверка пересечения с буфером перед
+         (start < ? AND end > ?)         -- Проверка пересечения с буфером после
+       )`,
+      [date, start, bufferStart, bufferEnd, end]
+    );
+
+    if (bufferConflicts.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "требуется 30-минутный перерыв до и после мероприятия в Бункере",
+      });
+    }
+
+    // Если проверки пройдены, создаем запись
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
     await connection.execute(
       `INSERT INTO bunker_events (
-        id, createdAt, date, start, end, status, phoneNumber, consumerName,
-        messenger, messengerNickname, isAmeteur, user_id,
-        childrenTariff, childrenAmount, peopleAmount, wishes,
-        peopleTariff, discount, prepayment
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  id, createdAt, date, start, end, status, phoneNumber, consumerName,
+  messenger, messengerNickname, isAmeteur, isPaid, user_id,
+  childrenTariff, childrenAmount, peopleAmount, wishes,
+  peopleTariff, discount, prepayment,
+  isBirthday, isExtr, childPlan, childAge, additionalTime, adultsWithChildrenAmount
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, createdAt, date, start, end, status, phoneNumber, consumerName,
-        messenger, messengerNickname, isAmeteur, user_id,
-        childrenTariff, childrenAmount, peopleAmount, wishes,
-        peopleTariff, discount, prepayment
+        id,
+        createdAt,
+        date,
+        start,
+        end,
+        status,
+        phoneNumber,
+        consumerName,
+        messenger,
+        messengerNickname,
+        isAmeteur,
+        isPaid,
+        user_id,
+        childrenTariff,
+        childrenAmount,
+        peopleAmount,
+        wishes,
+        peopleTariff,
+        discount,
+        prepayment,
+        isBirthday,
+        isExtr,
+        childPlan,
+        childAge,
+        additionalTime,
+        adultsWithChildrenAmount,
       ]
     );
 
     res.status(201).json({
+      success: true,
       id,
-      message: "Event added successfully",
+      message: "Мероприятие в Бункере успешно добавлено",
     });
   } catch (error) {
-    console.error("Error adding event:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error adding bunker event:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      details: error.message,
+    });
   } finally {
     if (connection) await connection.end();
   }
 };
 
-// Обновление события
 const updateEvent = async (req, res) => {
   let connection;
   try {
     connection = await createDbConnection();
     const { id } = req.params;
+    const { date, start, end } = req.body;
 
+    // Если обновляются время или дата - проверяем доступность
+    if (date || start || end) {
+      // Получаем текущие значения
+      const [currentEvent] = await connection.execute(
+        "SELECT date, start, end FROM bunker_events WHERE id = ?",
+        [id]
+      );
+
+      if (!currentEvent.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Event not found",
+        });
+      }
+
+      const finalDate = date || currentEvent[0].date;
+      const finalStart = start || currentEvent[0].start;
+      const finalEnd = end || currentEvent[0].end;
+
+      // Проверка на пересечение с другими событиями
+      const [existingEvents] = await connection.execute(
+        `SELECT id FROM bunker_events 
+         WHERE date = ? AND id != ? AND (
+           (start < ? AND end > ?) OR
+           (start < ? AND end > ?) OR
+           (start >= ? AND end <= ?)
+        )`,
+        [
+          finalDate,
+          id,
+          finalEnd,
+          finalStart,
+          finalStart,
+          finalEnd,
+          finalStart,
+          finalEnd,
+        ]
+      );
+
+      if (existingEvents.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "на это время уже есть другая запись в Бункере",
+        });
+      }
+
+      // Проверка 30-минутных буферов
+      const startTime = new Date(`${finalDate}T${finalStart}`);
+      const endTime = new Date(`${finalDate}T${finalEnd}`);
+
+      const bufferStart = new Date(startTime.getTime() - 30 * 60000)
+        .toISOString()
+        .substr(11, 8);
+      const bufferEnd = new Date(endTime.getTime() + 30 * 60000)
+        .toISOString()
+        .substr(11, 8);
+
+      const [bufferConflicts] = await connection.execute(
+        `SELECT id FROM bunker_events 
+         WHERE date = ? AND id != ? AND (
+           (start < ? AND end > ?) OR
+           (start < ? AND end > ?)
+        )`,
+        [finalDate, id, finalStart, bufferStart, bufferEnd, finalEnd]
+      );
+
+      if (bufferConflicts.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "требуется 30-минутный перерыв до и после мероприятия в Бункере",
+        });
+      }
+    }
+
+    // Обновление данных
     const fields = [
-      "date", "start", "end", "status", "phoneNumber", "consumerName",
-      "messenger", "messengerNickname", "isAmeteur", "childrenTariff",
-      "childrenAmount", "peopleAmount", "wishes", "peopleTariff",
-      "discount", "prepayment"
+      "date",
+      "start",
+      "end",
+      "status",
+      "phoneNumber",
+      "consumerName",
+      "messenger",
+      "messengerNickname",
+      "isAmeteur",
+      "isPaid",
+      "childrenTariff",
+      "childrenAmount",
+      "peopleAmount",
+      "wishes",
+      "peopleTariff",
+      "discount",
+      "prepayment",
+      "isBirthday",
+      "isExtr",
+      "childPlan",
+      "childAge",
+      "additionalTime",
+      "adultsWithChildrenAmount",
     ];
 
     const updates = fields
-      .filter(field => field in req.body)
-      .map(field => `${field} = ?`)
+      .filter((field) => field in req.body)
+      .map((field) => `${field} = ?`)
       .join(", ");
 
     const values = fields
-      .filter(field => field in req.body)
-      .map(field => req.body[field]);
+      .filter((field) => field in req.body)
+      .map((field) => req.body[field]);
 
     if (updates.length === 0) {
-      return res.status(400).json({ error: "No fields to update" });
+      return res.status(400).json({
+        success: false,
+        error: "No fields to update",
+      });
     }
 
     values.push(id);
@@ -135,13 +314,23 @@ const updateEvent = async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Event not found" });
+      return res.status(404).json({
+        success: false,
+        error: "Event not found",
+      });
     }
 
-    res.status(200).json({ message: "Event updated successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Мероприятие в Бункере успешно обновлено",
+    });
   } catch (error) {
-    console.error("Error updating event:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error updating bunker event:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      details: error.message,
+    });
   } finally {
     if (connection) await connection.end();
   }

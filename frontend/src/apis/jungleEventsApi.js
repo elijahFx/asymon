@@ -1,11 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
-const BASIC_URL = "http://localhost:5000/";
+import { BASIC_URL } from "./userApi";
 
 export const jungleEventsApi = createApi({
   reducerPath: "jungleEventsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: BASIC_URL,
+    baseUrl: `https://coursehunters.by/`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);
@@ -39,7 +38,7 @@ export const jungleEventsApi = createApi({
     updateJungleEvent: builder.mutation({
       query: ({ id, ...updatedEvent }) => ({
         url: `/jungle/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body: updatedEvent,
       }),
       invalidatesTags: ["Events"],

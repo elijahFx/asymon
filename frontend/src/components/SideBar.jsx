@@ -1,11 +1,14 @@
 import { useState } from "react";
 import {
-  Settings,
   ChevronLeft,
   ChevronRight,
   Calendar,
   ShieldUser,
-  Citrus
+  Citrus,
+  List,
+  MessageSquareMore,
+  Eye,
+  LoaderCircle
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -28,10 +31,25 @@ const SideBar = () => {
       icon: <ShieldUser color="gold" />,
       link: "/bunker",
     },
+     {
+      label: "Общий список",
+      icon: <List color="#0C1B60" />,
+      link: "/list",
+    },
     {
-      label: "Настройки системы",
-      icon: <Settings color="#0C1B60" />,
-      link: "/settings",
+      label: "Просмотр",
+      icon: <Eye color="#0C1B60" />,
+      link: "/views",
+    },
+    {
+      label: "Лист ожидания",
+      icon: <LoaderCircle color="#0C1B60" />,
+      link: "/waitings",
+    },
+    {
+      label: "SMS-оповещения",
+      icon: <MessageSquareMore color="#0C1B60" />,
+      link: "/sms",
     },
   ];
 

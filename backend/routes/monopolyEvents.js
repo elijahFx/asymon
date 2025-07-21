@@ -6,10 +6,13 @@ const {
   deleteEvent,
   updateEvent,
   getEventById,
+  getEventsFromAll
 } = require("../controllers/monopolyEventsControllers");
 const requireAuth = require("../requireAuth");
 
 const router = express.Router();
+
+router.get("/all", requireAuth, getEventsFromAll)
 
 router.get("/:id", requireAuth, getEventById);
 

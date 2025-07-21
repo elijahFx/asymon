@@ -1,271 +1,515 @@
 import React, { useEffect, useState } from "react";
-import { Pen, Check, X, Plus } from "lucide-react";
-/*import {
-  useAddEventMutation,
-  useGetSingleEventQuery,
-  useUpdateEventMutation,
-} from "../../apis/monopolyEventsApi";*/
-import { useSelector } from "react-redux";
+import {
+  Pen,
+  Check,
+  X,
+  DollarSign,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useParams } from "react-router";
+import {
+  useGetSingleMonopolyEventQuery,
+  useUpdateMonopolyEventMutation,
+} from "../../apis/monopolyEventsApi";
 
-const SingleEvent = ({ type = "view" }) => {
-  console.log(type);
+import {
+  useGetSingleBunkerEventQuery,
+  useUpdateBunkerEventMutation,
+} from "../../apis/bunkerEventsApi";
 
-  const [mode, setMode] = useState(type); // 'view', 'add' или 'edit'
-  const [eventType, setEventType] = useState("");
+import {
+  useGetSingleJungleEventQuery,
+  useUpdateJungleEventMutation,
+} from "../../apis/jungleEventsApi";
+
+import { STATUS_COLORS } from "../../utils/types";
+
+const SingleEvent = ({ type = "view", place }) => {
+  const [mode, setMode] = useState(type);
   const [originalEventData, setOriginalEventData] = useState(null);
   const [eventData, setEventData] = useState({
-    type: "",
+    consumerName: "",
+    phoneNumber: "",
+    messenger: "",
+    messengerNickname: "",
     date: "",
-    responsible: "",
-    court: "",
-    time: "",
-    caseNumber: "",
-    color: "",
+    start: "",
+    end: "",
+    peopleAmount: "",
+    childrenAmount: "",
+    status: "Новое",
+    wishes: "",
+    prepayment: "",
+    discount: "",
+    place: "",
+    peopleTariff: "",
+    childrenTariff: "",
+    isAmeteur: false,
+    isPaid: false,
+    isBirthday: false,
+    isExtr: false,
+    childPlan: "",
+    childAge: "",
+    additionalTime: "",
+    adultsWithChildrenAmount: "",
   });
+  const [isFinanceCollapsed, setIsFinanceCollapsed] = useState(false);
 
-  console.log(mode);
-  const { number } = useParams();
+  const { id } = useParams();
+
+  const getQueryHooks = () => {
+    switch (place) {
+      case "monopoly":
+        return {
+          useGetQuery: useGetSingleMonopolyEventQuery,
+          useUpdateMutation: useUpdateMonopolyEventMutation,
+        };
+      case "jungle":
+        return {
+          useGetQuery: useGetSingleJungleEventQuery,
+          useUpdateMutation: useUpdateJungleEventMutation,
+        };
+      case "bunker":
+        return {
+          useGetQuery: useGetSingleBunkerEventQuery,
+          useUpdateMutation: useUpdateBunkerEventMutation,
+        };
+      default:
+        return {
+          useGetQuery: useGetSingleMonopolyEventQuery,
+          useUpdateMutation: useUpdateMonopolyEventMutation,
+        };
+    }
+  };
+
+  const { useGetQuery, useUpdateMutation } = getQueryHooks();
 
   const {
     data,
     isLoading: loaderForSingleEvent,
     error: errorForSingleEvent,
-  } = useGetSingleEventQuery(number);
-  const [updateEvent] = useUpdateEventMutation();
+  } = useGetQuery(id);
+  const [updateEvent] = useUpdateMutation();
 
   useEffect(() => {
-    if (type === "view" && data) {
+    if (data) {
       setOriginalEventData(data);
       setEventData({
-        type: data?.type,
-        date: data?.date,
-        responsible: data?.responsibleEmployee,
-        court: data?.court,
-        time: data?.time,
-        caseNumber: data?.case_num,
-        color: data?.color,
+        ...eventData,
+        ...data,
       });
-      setEventType(data?.type);
     }
-  }, [type, data]);
+  }, [data]);
 
-  const user_id = useSelector((state) => state.auth.id);
-  const fullName = useSelector((state) => state.auth.fullName);
-  const [addEvent, { error, isLoading }] = useAddEventMutation();
+  const calculateFinancials = () => {
+    const peopleCost =
+      parseFloat(eventData.peopleAmount || 0) *
+      parseFloat(eventData.peopleTariff || 0);
+    const childrenCost =
+      parseFloat(eventData.childrenAmount || 0) *
+      parseFloat(eventData.childrenTariff || 0);
+    const totalCost = peopleCost + childrenCost;
+    const discountAmount =
+      totalCost * (parseFloat(eventData.discount || 0) / 100);
+    const finalCost = totalCost - discountAmount;
+    const prepaymentAmount = parseFloat(eventData.prepayment || 0);
+    const remainingAmount = finalCost - prepaymentAmount;
 
-  const handleEditEvent = () => {
-    setMode("edit");
+    return {
+      totalCost,
+      discountAmount,
+      finalCost,
+      prepaymentAmount,
+      remainingAmount,
+    };
   };
 
-  const handleAddEvent = () => {
-    setMode("add");
-    setEventType("");
-    setEventData({
-      type: "",
-      date: "",
-      responsible: "",
-      court: "",
-      time: "",
-      caseNumber: "",
-      color: "",
-    });
-  };
+  const {
+    totalCost,
+    discountAmount,
+    finalCost,
+    prepaymentAmount,
+    remainingAmount,
+  } = calculateFinancials();
+
+  const handleEditEvent = () => setMode("edit");
 
   const handleUpdate = async () => {
     try {
-      await updateEvent({
-        id: number,
-        ...eventData,
-        responsibleEmployee: eventData.responsible,
-        case_num: eventData.caseNumber,
-        color: eventData.color || "",
-      }).unwrap();
+      await updateEvent({ id, ...eventData }).unwrap();
       setMode("view");
     } catch (err) {
       console.error("Failed to update event:", err);
     }
   };
 
-  const handleSave = async () => {
-    if (!eventData.type || !eventData.date || !eventData.time) return;
-
-    if (mode === "add") {
-      await addEvent({
-        user_id: user_id,
-        type: eventData.type,
-        date: eventData.date,
-        time: eventData.time,
-        responsibleEmployee: eventData.responsible,
-        court: eventData.court || null,
-        case_num: eventData.caseNumber || null,
-        color: eventData?.color || null,
-      }).unwrap();
-    }
-
-    setMode("view");
-    setEventData({
-      type: eventData.type,
-      date: eventData.date,
-      responsible: eventData.responsible,
-      court: eventData.court,
-      time: eventData.time,
-      caseNumber: eventData.caseNumber,
-    });
-  };
-
   const handleCancel = () => {
-    if (mode === "edit") {
-      setEventData({
-        type: originalEventData?.type,
-        date: originalEventData?.date,
-        responsible: originalEventData?.responsibleEmployee,
-        court: originalEventData?.court,
-        time: originalEventData?.time,
-        caseNumber: originalEventData?.case_num,
-      });
-    }
+    setEventData({ ...originalEventData });
     setMode("view");
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEventData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type: inputType, checked } = e.target;
+    const val = inputType === "checkbox" ? checked : value;
+    setEventData((prev) => ({ ...prev, [name]: val }));
   };
 
-  const handleTypeChange = (e) => {
-    setEventType(e.target.value);
-    setEventData((prev) => ({ ...prev, type: e.target.value }));
+  const toggleFinanceCollapse = () => {
+    setIsFinanceCollapsed(!isFinanceCollapsed);
   };
 
-  const renderField = (label, value, name, isEditable = false) => (
-    <div className="flex items-start py-2 group">
-      <div className="w-48 font-medium text-gray-700">{label}:</div>
-      {isEditable && mode !== "view" ? ( // Изменили условие
+  const renderSection = (title, children) => {
+    return (
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+          {title}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {children.filter(Boolean)} {/* 🔥 Вот это критически важно */}
+        </div>
+      </div>
+    );
+  };
+
+  const renderField = (
+    label,
+    value,
+    name,
+    isEditable = false,
+    type = "text"
+  ) => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {isEditable && mode !== "view" ? (
         <input
-          type="text"
+          type={type}
           name={name}
-          value={value || ""} // Добавили fallback для value
+          value={value || ""}
           onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       ) : (
-        <div className="text-gray-900">{value || "—"}</div> // Добавили fallback
+        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+          {value === 0 || value ? String(value) : "—"}
+        </div>
       )}
     </div>
   );
 
-  return (
-    <div className="p-6 bg-white shadow rounded-md flex-1 mt-[11vh]">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-gray-700">
-          {mode === "view"
-            ? "Событие"
-            : mode === "edit"
-            ? "Редактирование мероприятия"
-            : "Добавить новое мероприятие"}
-        </h2>
+  const renderSelectField = (label, name, options, selectedValue) => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {mode !== "view" ? (
+        <select
+          name={name}
+          value={selectedValue}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+          {options.find((opt) => opt.value === selectedValue)?.label || "—"}
+        </div>
+      )}
+    </div>
+  );
 
-        {mode === "view" ? (
-          <div className="flex gap-2">
+  const renderTextArea = (label, value, name) => (
+    <div className="space-y-1 col-span-2">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {mode !== "view" ? (
+        <textarea
+          name={name}
+          value={value || ""}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      ) : (
+        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[60px]">
+          {value || "—"}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderCheckbox = (label, name) => (
+    <label className="flex items-center space-x-2">
+      <input
+        type="checkbox"
+        name={name}
+        checked={!!eventData[name]}
+        onChange={handleChange}
+        disabled={mode === "view"}
+        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      />
+      <span className="text-sm text-gray-700">{label}</span>
+    </label>
+  );
+
+  return (
+    <div className="w-full p-6 bg-white rounded-lg shadow-md mt-[11vh]">
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {mode === "view" ? "Детали записи" : "Редактирование записи"}
+          </h2>
+          <div
+            className={`${
+              STATUS_COLORS[eventData.status]
+            } text-white px-4 py-1 rounded-full text-sm inline-flex items-center mt-2`}
+          >
+            {eventData.status}
+          </div>
+        </div>
+
+        <div className="flex space-x-2">
+          {mode === "view" ? (
             <button
               onClick={handleEditEvent}
-              className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50"
-              title="Редактировать"
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              <Pen size={18} strokeWidth={2} />
+              <Pen size={16} className="mr-2" />
+              Редактировать
             </button>
-            <button
-              onClick={handleAddEvent}
-              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
-            >
-              <Plus size={18} strokeWidth={2} />
-              Добавить событие
-            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleUpdate}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                <Check size={16} className="mr-2" />
+                Сохранить
+              </button>
+              <button
+                onClick={handleCancel}
+                className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+              >
+                <X size={16} className="mr-2" />
+                Отменить
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => window.history.back()}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Назад
+          </button>
+        </div>
+      </div>
+
+      {/* Финансовый блок с возможностью сворачивания */}
+      <div className="mb-6 bg-blue-50 rounded-lg border border-blue-100 overflow-hidden">
+        <button
+          onClick={toggleFinanceCollapse}
+          className="w-full flex justify-between items-center p-4 hover:bg-blue-100 transition-colors"
+        >
+          <div className="flex items-center">
+            <DollarSign className="mr-2" size={18} />
+            <h4 className="text-lg font-semibold text-blue-800">
+              Итоговая стоимость
+            </h4>
           </div>
-        ) : (
-          <div className="flex space-x-2">
-            <button
-              onClick={mode === "edit" ? handleUpdate : handleSave}
-              className="p-1.5 rounded-md text-green-600 hover:bg-green-50"
-              title={mode === "edit" ? "Сохранить изменения" : "Сохранить"}
-            >
-              <Check size={18} strokeWidth={2} />
-            </button>
-            <button
-              onClick={handleCancel}
-              className="p-1.5 rounded-md text-red-600 hover:bg-red-50"
-              title="Отменить"
-            >
-              <X size={18} strokeWidth={2} />
-            </button>
+          {isFinanceCollapsed ? (
+            <ChevronDown size={20} className="text-blue-600" />
+          ) : (
+            <ChevronUp size={20} className="text-blue-600" />
+          )}
+        </button>
+
+        {!isFinanceCollapsed && (
+          <div className="p-4 pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-3 rounded border">
+                <div className="text-sm text-gray-500">Общая стоимость</div>
+                <div className="text-xl font-bold">
+                  {totalCost.toFixed(2)} Br
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded border">
+                <div className="text-sm text-gray-500">
+                  Скидка {eventData.discount || 0}%
+                </div>
+                <div className="text-xl font-bold text-red-500">
+                  -{discountAmount.toFixed(2)} Br
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded border border-blue-200 bg-blue-50">
+                <div className="text-sm text-blue-600">Итого к оплате</div>
+                <div className="text-2xl font-bold text-blue-700">
+                  {finalCost.toFixed(2)} Br
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-white p-3 rounded border">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-500">Предоплата</div>
+                <div className="text-lg font-medium">
+                  {eventData.prepayment
+                    ? `${Number(eventData.prepayment).toFixed(2)} Br`
+                    : "—"}
+                </div>
+              </div>
+              {eventData.prepayment && (
+                <div className="mt-2 flex justify-between items-center">
+                  <div className="text-sm text-gray-500">Остаток</div>
+                  <div className="text-lg font-medium">
+                    {remainingAmount.toFixed(2)} Br
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {mode === "view" ? (
-        <div className="space-y-4 text-sm text-gray-800">
-          {renderField("Тип события", eventData.type)}
-
-          {eventData.type === "Дежурство" ? (
-            <>
-              {renderField("Дата", eventData.date)}
-              {renderField("Ответственный сотрудник", eventData.responsible)}
-            </>
-          ) : (
-            <>
-              {renderField("Суд", eventData.court)}
-              {renderField("Дата заседания", eventData.date)}
-              {renderField("Время заседания", eventData.time)}
-              {renderField("№ дела", eventData.caseNumber)}
-            </>
-          )}
+      {loaderForSingleEvent ? (
+        <div className="text-center py-10">Загрузка данных...</div>
+      ) : errorForSingleEvent ? (
+        <div className="text-center py-10 text-red-500">
+          Ошибка загрузки данных
         </div>
       ) : (
-        <div className="space-y-4 text-sm text-gray-800">
-          <div className="flex items-start py-2">
-            <div className="w-48 font-medium text-gray-700">Тип события:</div>
-            <select
-              value={eventType}
-              onChange={handleTypeChange}
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-            >
-              <option value="">Выберите тип мероприятия</option>
-              <option value="Дежурство">Дежурство</option>
-              <option value="Судебное заседание">Судебное заседание</option>
-            </select>
+        <div className="space-y-6">
+          {renderSection("Основная информация", [
+            renderField(
+              "Имя клиента",
+              eventData.consumerName,
+              "consumerName",
+              true
+            ),
+            renderField("Телефон", eventData.phoneNumber, "phoneNumber", true),
+            renderField("Мессенджер", eventData.messenger, "messenger", true),
+            renderField(
+              "Ник в мессенджере",
+              eventData.messengerNickname,
+              "messengerNickname",
+              true
+            ),
+          ])}
+
+          {renderSection("Детали мероприятия", [
+            renderField("Место проведения", eventData.place, "place", true),
+            renderField("Дата игры", eventData.date, "date", true, "date"),
+            renderField("Время начала", eventData.start, "start", true, "time"),
+            renderField("Время окончания", eventData.end, "end", true, "time"),
+          ])}
+
+          {renderSection("Участники", [
+            renderField(
+              "Количество взрослых",
+              eventData.peopleAmount,
+              "peopleAmount",
+              true,
+              "number"
+            ),
+            renderField(
+              "Тариф для взрослых",
+              eventData.peopleTariff,
+              "peopleTariff",
+              true,
+              "number"
+            ),
+            ...(eventData.isAmeteur
+              ? [
+                  renderField(
+                    "Количество детей",
+                    eventData.childrenAmount,
+                    "childrenAmount",
+                    true,
+                    "number"
+                  ),
+                  renderField(
+                    "Тариф для детей",
+                    eventData.childrenTariff,
+                    "childrenTariff",
+                    true,
+                    "number"
+                  ),
+                ]
+              : []),
+            renderSelectField(
+              "Статус",
+              "status",
+              [
+                { value: "Новое", label: "Новое" },
+                { value: "Ждем предоплату", label: "Ждем предоплату" },
+                { value: "Предоплата внесена", label: "Предоплата внесена" },
+              ],
+              eventData.status
+            ),
+          ])}
+
+          <div className="p-4 bg-white rounded shadow">
+            <h3 className="text-lg font-semibold mb-4">Дополнительные поля</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {[
+                renderCheckbox("Детский праздник", "isAmeteur"),
+                renderCheckbox("Оплачено", "isPaid"),
+                renderCheckbox("День рождения", "isBirthday"),
+                renderCheckbox("EXTR", "isExtr"),
+                ...(eventData.isAmeteur
+                  ? [
+                      renderSelectField(
+                        "План для детей",
+                        "childPlan",
+                        [
+                          { value: "Старт", label: "Старт" },
+                          { value: "Стандарт", label: "Стандарт" },
+                          { value: "ВИП", label: "ВИП" },
+                        ],
+                        eventData.childPlan
+                      ),
+                      renderField(
+                        "Возраст детей",
+                        eventData.childAge,
+                        "childAge",
+                        true,
+                        "number"
+                      ),
+                      renderField(
+                        "Доп. время аренды",
+                        eventData.additionalTime,
+                        "additionalTime",
+                        true
+                      ),
+                      renderField(
+                        "Взрослых с детьми",
+                        eventData.adultsWithChildrenAmount,
+                        "adultsWithChildrenAmount",
+                        true,
+                        "number"
+                      ),
+                    ]
+                  : []),
+              ].filter(Boolean)}
+
+
+            </div>
           </div>
 
-          {eventType === "Дежурство" ? (
-            <>
-              {renderField("Дата", eventData.date, "date", true)}
-              {renderField("Время", eventData.time, "time", true)}
-              {renderField(
-                "Ответственный сотрудник",
-                eventData.responsible,
-                "responsible",
-                true
-              )}
-            </>
-          ) : eventType === "Судебное заседание" ? (
-            <>
-             
-              {renderField("Дата заседания", eventData.date, "date", true)}
-              {renderField("Время заседания", eventData.time, "time", true)}
-              {renderField("№ дела", eventData.caseNumber, "caseNumber", true)}
-            </>
-          ) : null}
+          {renderSection("Финансы", [
+            renderField("Предоплата", eventData.prepayment, "prepayment", true),
+            renderField("Скидка", eventData.discount, "discount", true),
+          ])}
+
+          {renderSection("Дополнительно", [
+            renderTextArea("Пожелания", eventData.wishes, "wishes"),
+          ])}
         </div>
       )}
-
-      <div className="flex gap-2 justify-end mt-6">
-        <button
-          className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm"
-          onClick={() => window.history.back()}
-        >
-          Вернуться
-        </button>
-      </div>
     </div>
   );
 };

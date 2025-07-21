@@ -4,8 +4,11 @@ import { userApi } from "./apis/userApi";
 import { monopolyEventsApi } from "./apis/monopolyEventsApi";
 import { jungleEventsApi } from "./apis/jungleEventsApi";
 import { bunkerEventsApi } from "./apis/bunkerEventsApi";
-import casesReducer from "./slices/casesSlice";
+import { waitingsApi } from "./apis/waitingsApi";
+import { viewsApi } from "./apis/viewsApi";
 import authReducer from "./slices/authSlice";
+import smsReducer from "./slices/smsSlice"
+
 
 export const store = configureStore({
   reducer: {
@@ -13,15 +16,19 @@ export const store = configureStore({
     [monopolyEventsApi.reducerPath]: monopolyEventsApi.reducer,
     [jungleEventsApi.reducerPath]: jungleEventsApi.reducer,
     [bunkerEventsApi.reducerPath]: bunkerEventsApi.reducer,
-    cases: casesReducer,
+    [waitingsApi.reducerPath]: waitingsApi.reducer,
+    [viewsApi.reducerPath]: viewsApi.reducer,
     auth: authReducer,
+    sms: smsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .concat(userApi.middleware)
       .concat(monopolyEventsApi.middleware)
       .concat(jungleEventsApi.middleware)
-      .concat(bunkerEventsApi.middleware),
+      .concat(bunkerEventsApi.middleware)
+      .concat(waitingsApi.middleware)
+      .concat(viewsApi.middleware),
 });
 
 setupListeners(store.dispatch);

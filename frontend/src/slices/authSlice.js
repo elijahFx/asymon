@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  user: null,         // Никнейм пользователя
+  user: null, // Никнейм пользователя
   token: null,
   isAuthenticated: false,
   loading: false,
@@ -14,7 +14,7 @@ const initialState = {
   timestamp: null,
   createdAt: null,
   caseCount: 0,
-  caseStatuses: null
+  caseStatuses: null,
 };
 
 const authSlice = createSlice({
@@ -33,11 +33,11 @@ const authSlice = createSlice({
       state.status = action.payload.status || state.status;
       state.fullName = action.payload.fullName || state.fullName;
       state.isAuthenticated = true;
-      state.timestamp = Date.now()
-      state.createdAt = action.payload.createdAt
-      state.caseCount = action.payload.caseCount
-      state.caseStatuses = action.payload.caseStatuses
-      
+      state.timestamp = Date.now();
+      state.createdAt = action.payload.createdAt;
+      state.caseCount = action.payload.caseCount;
+      state.caseStatuses = action.payload.caseStatuses;
+
       // Сохраняем актуальное состояние авторизации в localStorage
       localStorage.setItem(
         "userASY",
@@ -53,7 +53,7 @@ const authSlice = createSlice({
           timestamp: Date.now(),
           createdAt: state.createdAt,
           caseCount: state.caseCount,
-          caseStatuses: state.caseStatuses
+          caseStatuses: state.caseStatuses,
         })
       );
     },
@@ -66,9 +66,9 @@ const authSlice = createSlice({
       state.status = null;
       state.fullName = null;
       state.isAuthenticated = false;
-      state.createdAt = null
-      state.caseCount = 0
-      state.caseStatuses = null
+      state.createdAt = null;
+      state.caseCount = 0;
+      state.caseStatuses = null;
       localStorage.removeItem("userASY");
     },
     setLoading: (state, action) => {
@@ -80,5 +80,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout, setLoading, setError } = authSlice.actions;
+export const { setCredentials, logout, setLoading, setError } =
+  authSlice.actions;
 export default authSlice.reducer;

@@ -12,11 +12,15 @@ const userRoutes = require("./routes/users");
 const monopolyEventsRoutes = require("./routes/monopolyEvents");
 const jungleEventsRoutes = require("./routes/jungleEvents");
 const bunkerEventsRoutes = require("./routes/bunkerEvents");
+const waitingsRoutes = require("./routes/waitings")
+const viewsRoutes = require("./routes/views")
 
 app.use("/users", userRoutes);
 app.use("/monopoly", monopolyEventsRoutes);
 app.use("/jungle", jungleEventsRoutes);
 app.use("/bunker", bunkerEventsRoutes);
+app.use("/waitings", waitingsRoutes);
+app.use("/views", viewsRoutes);
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
