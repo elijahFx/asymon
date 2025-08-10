@@ -22,6 +22,20 @@ import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const MESSENGERS = [
+  { value: "Viber", label: "Viber" },
+  { value: "Telegram", label: "Telegram" },
+  { value: "WhatsApp", label: "WhatsApp" },
+  { value: "Instagram", label: "Instagram" },
+  { value: "ВКонтакте", label: "ВКонтакте" },
+];
+
+const ADULT_TARIFFS = [
+  { value: "Тариф 1", label: "Тариф 1" },
+  { value: "Тариф 2", label: "Тариф 2" },
+  { value: "Тариф 3", label: "Тариф 3" },
+];
+
 const AddEvent = () => {
   const user_id = useSelector((state) => state.auth.id);
   const navigate = useNavigate();
@@ -316,6 +330,18 @@ const AddEvent = () => {
     </div>
   );
 
+  const renderTariffField = () => (
+    <div className="flex items-center py-2">
+      <div className="w-48 font-medium text-gray-700 flex items-center">
+        <DollarSign className="mr-2" size={16} />
+        Тариф (взрослые):
+      </div>
+      <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+        {formData.peopleTariff || "—"}
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6 bg-white rounded-lg shadow-md flex-1 mt-[11vh] mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -466,15 +492,35 @@ const AddEvent = () => {
                   <User size={16} />,
                   true
                 )}
-                {renderField(
-                  "Мессенджер",
-                  formData.messenger,
-                  "messenger",
-                  true,
-                  "text",
-                  <MessageSquare size={16} />,
-                  !formData.phoneNumber
-                )}
+                <div className="flex items-center py-2">
+                  <div className="w-48 font-medium text-gray-700 flex items-center">
+                    <MessageSquare className="mr-2" size={16} />
+                    Мессенджер<span className="text-red-500 ml-1">*</span>:
+                  </div>
+                  <div className="w-full">
+                    <select
+                      name="messenger"
+                      value={formData.messenger || ""}
+                      onChange={handleChange}
+                      className={`w-full border ${
+                        errors.messenger ? "border-red-500" : "border-gray-300"
+                      } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
+                      required={!formData.phoneNumber}
+                    >
+                      <option value="">Выберите мессенджер</option>
+                      {MESSENGERS.map((messenger) => (
+                        <option key={messenger.value} value={messenger.value}>
+                          {messenger.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.messenger && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {errors.messenger}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 {renderField(
                   "Ник в мессенджере",
                   formData.messengerNickname,
@@ -525,7 +571,7 @@ const AddEvent = () => {
                         <Users size={16} />,
                         true
                       )}
-                      
+
                       <div className="flex items-center py-2 group">
                         <Gift className="text-gray-400 mr-2" />
                         <div className="w-48 font-medium text-gray-700">
@@ -589,16 +635,40 @@ const AddEvent = () => {
                 </div>
 
                 <div>
-                  {ageGroup === "Взрослый" &&
-                    renderField(
-                      "Тариф (взрослые)",
-                      formData.peopleTariff,
-                      "peopleTariff",
-                      true,
-                      "number",
-                      <DollarSign size={16} />,
-                      true
-                    )}
+                  {ageGroup === "Взрослый" && (
+                    <div className="flex items-center py-2">
+                      <div className="w-48 font-medium text-gray-700 flex items-center">
+                        <DollarSign className="mr-2" size={16} />
+                        Тариф (взрослые)
+                        <span className="text-red-500 ml-1">*</span>:
+                      </div>
+                      <div className="w-full">
+                        <select
+                          name="peopleTariff"
+                          value={formData.peopleTariff || ""}
+                          onChange={handleChange}
+                          className={`w-full border ${
+                            errors.peopleTariff
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
+                          required
+                        >
+                          <option value="">Выберите тариф</option>
+                          {ADULT_TARIFFS.map((tariff) => (
+                            <option key={tariff.value} value={tariff.value}>
+                              {tariff.label}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.peopleTariff && (
+                          <div className="text-red-500 text-xs mt-1">
+                            {errors.peopleTariff}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {renderField(
                     "Скидка (%)",
                     formData.discount,

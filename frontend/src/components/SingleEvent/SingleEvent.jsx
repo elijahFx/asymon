@@ -25,6 +25,20 @@ import {
 
 import { STATUS_COLORS } from "../../utils/types";
 
+// Добавляем константу с вариантами мессенджеров
+const MESSENGERS = [
+  { value: "Viber", label: "Viber" },
+  { value: "Telegram", label: "Telegram" },
+  { value: "WhatsApp", label: "WhatsApp" },
+  { value: "Instagram", label: "Instagram" },
+];
+
+const ADULT_TARIFFS = [
+  { value: "Тариф 1", label: "Тариф 1", coefficient: 1.0 },
+  { value: "Тариф 2", label: "Тариф 2", coefficient: 1.2 },
+  { value: "Тариф 3", label: "Тариф 3", coefficient: 1.5 },
+];
+
 const SingleEvent = ({ type = "view", place }) => {
   const [mode, setMode] = useState(type);
   const [originalEventData, setOriginalEventData] = useState(null);
@@ -103,18 +117,37 @@ const SingleEvent = ({ type = "view", place }) => {
   }, [data]);
 
   const calculateFinancials = () => {
+    // Находим выбранный тариф и его коэффициент
+    const selectedTariff = ADULT_TARIFFS.find(
+      (tariff) => tariff.value === eventData.peopleTariff
+    );
+    const tariffCoefficient = selectedTariff?.coefficient || 1.0;
+
+    console.log(tariffCoefficient);
+    
+
+    // Рассчитываем стоимость с учетом коэффициента тарифа
     const peopleCost =
-      parseFloat(eventData.peopleAmount || 0) *
-      parseFloat(eventData.peopleTariff || 0);
+      parseFloat(eventData.peopleAmount || 0) * tariffCoefficient
+
     const childrenCost =
       parseFloat(eventData.childrenAmount || 0) *
       parseFloat(eventData.childrenTariff || 0);
+
     const totalCost = peopleCost + childrenCost;
     const discountAmount =
       totalCost * (parseFloat(eventData.discount || 0) / 100);
     const finalCost = totalCost - discountAmount;
     const prepaymentAmount = parseFloat(eventData.prepayment || 0);
     const remainingAmount = finalCost - prepaymentAmount;
+
+    console.log({
+      totalCost,
+      discountAmount,
+      finalCost,
+      prepaymentAmount,
+      remainingAmount,
+    });
 
     return {
       totalCost,
@@ -166,7 +199,7 @@ const SingleEvent = ({ type = "view", place }) => {
           {title}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {children.filter(Boolean)} {/* 🔥 Вот это критически важно */}
+          {children.filter(Boolean)}
         </div>
       </div>
     );
@@ -240,18 +273,76 @@ const SingleEvent = ({ type = "view", place }) => {
     </div>
   );
 
-  const renderCheckbox = (label, name) => (
-    <label className="flex items-center space-x-2">
-      <input
-        type="checkbox"
-        name={name}
-        checked={!!eventData[name]}
-        onChange={handleChange}
-        disabled={mode === "view"}
-        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-      />
-      <span className="text-sm text-gray-700">{label}</span>
-    </label>
+  const renderCheckbox = (label, name) => {
+    return (
+      <label className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          name={name}
+          checked={!!eventData[name]}
+          onChange={handleChange}
+          disabled={mode === "view"}
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <span className="text-sm text-gray-700">{label}</span>
+      </label>
+    );
+  };
+
+  // Новая функция для рендеринга поля мессенджера
+  const renderMessengerField = () => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700">
+        Мессенджер
+      </label>
+      {mode !== "view" ? (
+        <select
+          name="messenger"
+          value={eventData.messenger || ""}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Выберите мессенджер</option>
+          {MESSENGERS.map((messenger) => (
+            <option key={messenger.value} value={messenger.value}>
+              {messenger.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+          {MESSENGERS.find((m) => m.value === eventData.messenger)?.label ||
+            "—"}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTariffField = () => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700">
+        Тариф (взрослые)
+      </label>
+      {mode !== "view" ? (
+        <select
+          name="peopleTariff"
+          value={eventData.peopleTariff || ""}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Выберите тариф</option>
+          {ADULT_TARIFFS.map((tariff) => (
+            <option key={tariff.value} value={tariff.value}>
+              {tariff.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+          {eventData.peopleTariff || "—"}
+        </div>
+      )}
+    </div>
   );
 
   return (
@@ -390,7 +481,7 @@ const SingleEvent = ({ type = "view", place }) => {
               true
             ),
             renderField("Телефон", eventData.phoneNumber, "phoneNumber", true),
-            renderField("Мессенджер", eventData.messenger, "messenger", true),
+            renderMessengerField(), // Заменяем стандартное поле на новое с выбором мессенджеров
             renderField(
               "Ник в мессенджере",
               eventData.messengerNickname,
@@ -414,13 +505,7 @@ const SingleEvent = ({ type = "view", place }) => {
               true,
               "number"
             ),
-            renderField(
-              "Тариф для взрослых",
-              eventData.peopleTariff,
-              "peopleTariff",
-              true,
-              "number"
-            ),
+            renderTariffField(),
             ...(eventData.isAmeteur
               ? [
                   renderField(
@@ -454,7 +539,6 @@ const SingleEvent = ({ type = "view", place }) => {
           <div className="p-4 bg-white rounded shadow">
             <h3 className="text-lg font-semibold mb-4">Дополнительные поля</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
               {[
                 renderCheckbox("Детский праздник", "isAmeteur"),
                 renderCheckbox("Оплачено", "isPaid"),
@@ -495,8 +579,6 @@ const SingleEvent = ({ type = "view", place }) => {
                     ]
                   : []),
               ].filter(Boolean)}
-
-
             </div>
           </div>
 

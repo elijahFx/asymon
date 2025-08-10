@@ -35,9 +35,11 @@ import {
   Citrus,
   Calendar as CalendarLucide,
   Eye,
-  Hourglass
+  Hourglass,
 } from "lucide-react";
 import EventTable from "./EventTable";
+
+const menuSize = 37;
 
 export default function MainPage({ type = "monopoly" }) {
   const DnDCalendar = withDragAndDrop(Calendar);
@@ -109,19 +111,19 @@ export default function MainPage({ type = "monopoly" }) {
   const menuItems = [
     {
       label: "Монополия",
-      icon: <CalendarLucide color="red" />,
+      icon: <CalendarLucide color="red" size={menuSize} />,
       link: "/main",
       type: "monopoly",
     },
     {
       label: "Джуманджи",
-      icon: <Citrus color="green" />,
+      icon: <Citrus color="green" size={menuSize} />,
       link: "/jungle",
       type: "jungle",
     },
     {
       label: "Бункер",
-      icon: <ShieldUser color="gold" />,
+      icon: <ShieldUser color="gold" size={menuSize} />,
       link: "/bunker",
       type: "bunker",
     },
@@ -314,16 +316,18 @@ export default function MainPage({ type = "monopoly" }) {
           <div className="flex justify-end mb-2 items-center">
             <h2 className="text-l font-bold text-center mr-auto">{namesake}</h2>
 
-            {otherMenuItems.map((item, index) => (
-              <Link
-                to={item.link}
-                key={index}
-                className="mr-2 text-gray-700 hover:text-gray-900"
-                title={item.label}
-              >
-                {item.icon}
-              </Link>
-            ))}
+            <div className="text-l font-bold text-center mr-56 flex">
+              {otherMenuItems.map((item, index) => (
+                <Link
+                  to={item.link}
+                  key={index}
+                  className="mr-2 text-gray-700 hover:text-gray-900"
+                  title={item.label}
+                >
+                  {item.icon}
+                </Link>
+              ))}
+            </div>
 
             <Link
               to={`/add?type=${type}`}

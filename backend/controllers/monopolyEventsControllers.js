@@ -73,6 +73,7 @@ const addEvent = async (req, res) => {
       childAge,
       additionalTime,
       adultsWithChildrenAmount,
+      additionalTimeWithHost
     } = req.body;
 
     const [existingEvents] = await connection.execute(
@@ -94,10 +95,10 @@ const addEvent = async (req, res) => {
 
     const startTime = new Date(`${date}T${start}`);
     const endTime = new Date(`${date}T${end}`);
-    const bufferStart = new Date(startTime.getTime() - 30 * 60000)
+    const bufferStart = new Date(startTime.getTime() - 29 * 60000)
       .toISOString()
       .substr(11, 8);
-    const bufferEnd = new Date(endTime.getTime() + 30 * 60000)
+    const bufferEnd = new Date(endTime.getTime() + 29 * 60000)
       .toISOString()
       .substr(11, 8);
 
@@ -127,8 +128,8 @@ const addEvent = async (req, res) => {
         messenger, messengerNickname, isAmeteur, isPaid, user_id,
         childrenTariff, childrenAmount, peopleAmount, wishes,
         peopleTariff, discount, prepayment, isBirthday, isExtr, childPlan, childAge,
-        additionalTime, adultsWithChildrenAmount
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        additionalTime, adultsWithChildrenAmount, additionalTimeWithHost
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         createdAt,
@@ -156,6 +157,7 @@ const addEvent = async (req, res) => {
         childAge,
         additionalTime,
         adultsWithChildrenAmount,
+        additionalTimeWithHost
       ]
     );
 
@@ -229,10 +231,10 @@ const updateEvent = async (req, res) => {
 
       const startTime = new Date(`${finalDate}T${finalStart}`);
       const endTime = new Date(`${finalDate}T${finalEnd}`);
-      const bufferStart = new Date(startTime.getTime() - 30 * 60000)
+      const bufferStart = new Date(startTime.getTime() - 29 * 60000)
         .toISOString()
         .substr(11, 8);
-      const bufferEnd = new Date(endTime.getTime() + 30 * 60000)
+      const bufferEnd = new Date(endTime.getTime() + 29 * 60000)
         .toISOString()
         .substr(11, 8);
 
@@ -278,6 +280,7 @@ const updateEvent = async (req, res) => {
       "childAge",
       "additionalTime",
       "adultsWithChildrenAmount",
+      "additionalTimeWithHost"
     ];
 
     const updates = fields
