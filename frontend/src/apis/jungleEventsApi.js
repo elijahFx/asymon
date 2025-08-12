@@ -4,7 +4,7 @@ import { BASIC_URL } from "./userApi";
 export const jungleEventsApi = createApi({
   reducerPath: "jungleEventsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `https://coursehunters.by/`,
+    baseUrl: `http://localhost:5000/`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);

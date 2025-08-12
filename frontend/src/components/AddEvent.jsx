@@ -21,6 +21,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SmartTimeInput from "./SmallStuff/SmartTimeInput.jsx";
 
 const MESSENGERS = [
   { value: "Viber", label: "Viber" },
@@ -35,6 +36,15 @@ const ADULT_TARIFFS = [
   { value: "Тариф 2", label: "Тариф 2" },
   { value: "Тариф 3", label: "Тариф 3" },
 ];
+
+// Добавляем варианты для дополнительного времени с шагом 0.5 часа
+const ADDITIONAL_TIME_OPTIONS = Array.from(
+  { length: 13 },
+  (_, i) => i * 0.5
+).map((value) => ({
+  value: value.toString(),
+  label: value === 0 ? "Нет" : `${value} ч`,
+}));
 
 const AddEvent = () => {
   const user_id = useSelector((state) => state.auth.id);
@@ -64,6 +74,7 @@ const AddEvent = () => {
     childPlan: "",
     adultsWithChildrenAmount: "",
     additionalTime: "",
+    additionalTimeWithHost: "",
     childAge: "",
   };
 
@@ -78,10 +89,13 @@ const AddEvent = () => {
   const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
 
+  console.log(formData);
+  
+
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      isAmeteur: ageGroup === "Детский",
+      isAmeteur: ageGroup === "Детский" ? 1 : 0,
     }));
   }, [ageGroup]);
 
@@ -160,6 +174,11 @@ const AddEvent = () => {
     }
 
     if (ageGroup === "Взрослый" && !formData.peopleTariff) {
+      newErrors.peopleTariff = "Укажите тариф для взрослых";
+      errorMessages.push("• Тариф для взрослых");
+    }
+
+     if (ageGroup === "Детский" && !formData.peopleTariff) {
       newErrors.peopleTariff = "Укажите тариф для взрослых";
       errorMessages.push("• Тариф для взрослых");
     }
@@ -274,7 +293,8 @@ const AddEvent = () => {
     isEditable = false,
     type = "text",
     icon = null,
-    required = false
+    required = false,
+    options = null
   ) => (
     <div className="flex items-center py-2 group">
       {icon && <span className="text-gray-400 mr-2">{icon}</span>}
@@ -308,6 +328,26 @@ const AddEvent = () => {
               <div className="text-red-500 text-xs mt-1">{errors[name]}</div>
             )}
           </div>
+        ) : type === "select" ? (
+          <div className="w-full">
+            <select
+              name={name}
+              value={value || ""}
+              onChange={handleChange}
+              className={`w-full border ${
+                errors[name] ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
+            >
+              {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {errors[name] && (
+              <div className="text-red-500 text-xs mt-1">{errors[name]}</div>
+            )}
+          </div>
         ) : (
           <div className="w-full">
             <input
@@ -327,18 +367,6 @@ const AddEvent = () => {
       ) : (
         <div className="text-gray-900">{value || "—"}</div>
       )}
-    </div>
-  );
-
-  const renderTariffField = () => (
-    <div className="flex items-center py-2">
-      <div className="w-48 font-medium text-gray-700 flex items-center">
-        <DollarSign className="mr-2" size={16} />
-        Тариф (взрослые):
-      </div>
-      <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
-        {formData.peopleTariff || "—"}
-      </div>
     </div>
   );
 
@@ -553,34 +581,17 @@ const AddEvent = () => {
                 <div>
                   {ageGroup === "Детский" && (
                     <>
-                      {renderField(
-                        "Тариф (дети)",
-                        formData.childrenTariff,
-                        "childrenTariff",
-                        true,
-                        "number",
-                        <DollarSign size={16} />,
-                        true
-                      )}
-                      {renderField(
-                        "Количество детей",
-                        formData.childrenAmount,
-                        "childrenAmount",
-                        true,
-                        "number",
-                        <Users size={16} />,
-                        true
-                      )}
-
                       <div className="flex items-center py-2 group">
                         <Gift className="text-gray-400 mr-2" />
                         <div className="w-48 font-medium text-gray-700">
-                          План (дети):
+                          План (дети)
+                            <span className="text-red-500 ml-1">*</span>:
                         </div>
+                       
                         <div className="w-full">
                           <select
-                            name="childPlan"
-                            value={formData.childPlan || ""}
+                            name="peopleTariff"
+                            value={formData.peopleTariff || ""}
                             onChange={handleChange}
                             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                           >
@@ -593,23 +604,13 @@ const AddEvent = () => {
                       </div>
 
                       {renderField(
-                        "Количество взрослых с детьми",
-                        formData.adultsWithChildrenAmount,
-                        "adultsWithChildrenAmount",
+                        "Количество детей",
+                        formData.childrenAmount,
+                        "childrenAmount",
                         true,
                         "number",
                         <Users size={16} />,
-                        false
-                      )}
-
-                      {renderField(
-                        "Доп. время аренды (мин)",
-                        formData.additionalTime,
-                        "additionalTime",
-                        true,
-                        "number",
-                        <Clock size={16} />,
-                        false
+                        true
                       )}
 
                       {renderField(
@@ -621,6 +622,58 @@ const AddEvent = () => {
                         <User size={16} />,
                         false
                       )}
+
+                      {renderField(
+                        "Количество взрослых с детьми",
+                        formData.adultsWithChildrenAmount,
+                        "adultsWithChildrenAmount",
+                        true,
+                        "number",
+                        <Users size={16} />,
+                        false
+                      )}
+
+                      <div className="flex items-center py-2 group">
+                        <Clock className="text-gray-400 mr-2" size={16} />
+                        <div className="w-48 font-medium text-gray-700">
+                          Доп. время аренды (в часах):
+                        </div>
+                        <div className="w-full">
+                          <SmartTimeInput
+                            value={formData.additionalTime}
+                            onChange={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                additionalTime: value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center py-2 group">
+                        <Clock className="text-gray-400 mr-2" size={16} />
+                        <div className="w-48 font-medium text-gray-700">
+                          Доп. ведущий (в часах)
+                        </div>
+                        <div className="w-full">
+                          <SmartTimeInput
+                            value={formData.additionalTimeWithHost}
+                            onChange={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                additionalTimeWithHost: value,
+                              }))
+                            }
+                             onBlur={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                additionalTimeWithHost: value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
                     </>
                   )}
                   {renderField(
@@ -636,38 +689,77 @@ const AddEvent = () => {
 
                 <div>
                   {ageGroup === "Взрослый" && (
-                    <div className="flex items-center py-2">
-                      <div className="w-48 font-medium text-gray-700 flex items-center">
-                        <DollarSign className="mr-2" size={16} />
-                        Тариф (взрослые)
-                        <span className="text-red-500 ml-1">*</span>:
+                    <>
+                      <div className="flex items-center py-2">
+                        <div className="w-48 font-medium text-gray-700 flex items-center">
+                          <DollarSign className="mr-2" size={16} />
+                          Тариф (взрослые)
+                          <span className="text-red-500 ml-1">*</span>:
+                        </div>
+                        <div className="w-full">
+                          <select
+                            name="peopleTariff"
+                            value={formData.peopleTariff || ""}
+                            onChange={handleChange}
+                            className={`w-full border ${
+                              errors.peopleTariff
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
+                            required
+                          >
+                            <option value="">Выберите тариф</option>
+                            {ADULT_TARIFFS.map((tariff) => (
+                              <option key={tariff.value} value={tariff.value}>
+                                {tariff.label}
+                              </option>
+                            ))}
+                          </select>
+                          {errors.peopleTariff && (
+                            <div className="text-red-500 text-xs mt-1">
+                              {errors.peopleTariff}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="w-full">
-                        <select
-                          name="peopleTariff"
-                          value={formData.peopleTariff || ""}
-                          onChange={handleChange}
-                          className={`w-full border ${
-                            errors.peopleTariff
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
-                          required
-                        >
-                          <option value="">Выберите тариф</option>
-                          {ADULT_TARIFFS.map((tariff) => (
-                            <option key={tariff.value} value={tariff.value}>
-                              {tariff.label}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.peopleTariff && (
-                          <div className="text-red-500 text-xs mt-1">
-                            {errors.peopleTariff}
-                          </div>
-                        )}
+
+                      {/* Добавляем поля для дополнительного времени для взрослых мероприятий */}
+                      <div className="flex items-center py-2 group">
+                        <Clock className="text-gray-400 mr-2" size={16} />
+                        <div className="w-48 font-medium text-gray-700">
+                          Доп. аренда (в часах):
+                        </div>
+                        <div className="w-full">
+                          <SmartTimeInput
+                            value={formData.additionalTime}
+                            onChange={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                additionalTime: value,
+                              }))
+                            }
+                          />
+                        </div>
                       </div>
-                    </div>
+
+                      <div className="flex items-center py-2 group">
+                        <Clock className="text-gray-400 mr-2" size={16} />
+                        <div className="w-48 font-medium text-gray-700">
+                          Доп. ведущий (в часах)
+                        </div>
+                        <div className="w-full">
+                          <SmartTimeInput
+                            value={formData.additionalTimeWithHost}
+                            onChange={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                additionalTimeWithHost: value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
                   {renderField(
                     "Скидка (%)",

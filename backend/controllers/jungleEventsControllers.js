@@ -290,6 +290,8 @@ const updateEvent = async (req, res) => {
       .map((field) => `${field} = ?`)
       .join(", ");
 
+      console.log(updates)
+
     const values = fields
       .filter((field) => field in req.body)
       .map((field) => req.body[field]);

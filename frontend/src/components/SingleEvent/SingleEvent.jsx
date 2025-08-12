@@ -24,6 +24,7 @@ import {
 } from "../../apis/jungleEventsApi";
 
 import { STATUS_COLORS } from "../../utils/types";
+import StatusCheckboxes from "../SmallStuff/StatusCheckboxes";
 
 // Добавляем константу с вариантами мессенджеров
 const MESSENGERS = [
@@ -37,6 +38,16 @@ const ADULT_TARIFFS = [
   { value: "Тариф 1", label: "Тариф 1", coefficient: 1.0 },
   { value: "Тариф 2", label: "Тариф 2", coefficient: 1.2 },
   { value: "Тариф 3", label: "Тариф 3", coefficient: 1.5 },
+];
+
+const TIME_OPTIONS = [
+  { value: "0", label: "Нет" },
+  { value: "0.5", label: "30 мин" },
+  { value: "1", label: "1 час" },
+  { value: "1.5", label: "1.5 часа" },
+  { value: "2", label: "2 часа" },
+  { value: "2.5", label: "2.5 часа" },
+  { value: "3", label: "3 часа" },
 ];
 
 const SingleEvent = ({ type = "view", place }) => {
@@ -66,6 +77,7 @@ const SingleEvent = ({ type = "view", place }) => {
     childPlan: "",
     childAge: "",
     additionalTime: "",
+    additionalTimeWithHost: "",
     adultsWithChildrenAmount: "",
   });
   const [isFinanceCollapsed, setIsFinanceCollapsed] = useState(false);
@@ -116,6 +128,24 @@ const SingleEvent = ({ type = "view", place }) => {
     }
   }, [data]);
 
+const handleStatusChange = async (newStatus) => {
+  try {
+    // Обновляем локальное состояние
+    setEventData(prev => ({ ...prev, status: newStatus }));
+    
+    // Отправляем PATCH запрос на сервер
+    await updateEvent({ 
+      id, 
+      status: newStatus
+    }).unwrap();
+    
+  } catch (err) {
+    console.error("Failed to update status:", err);
+    // В случае ошибки возвращаем предыдущее состояние
+    setEventData(prev => ({ ...prev }));
+  }
+};
+
   const calculateFinancials = () => {
     // Находим выбранный тариф и его коэффициент
     const selectedTariff = ADULT_TARIFFS.find(
@@ -124,11 +154,10 @@ const SingleEvent = ({ type = "view", place }) => {
     const tariffCoefficient = selectedTariff?.coefficient || 1.0;
 
     console.log(tariffCoefficient);
-    
 
     // Рассчитываем стоимость с учетом коэффициента тарифа
     const peopleCost =
-      parseFloat(eventData.peopleAmount || 0) * tariffCoefficient
+      parseFloat(eventData.peopleAmount || 0) * tariffCoefficient;
 
     const childrenCost =
       parseFloat(eventData.childrenAmount || 0) *
@@ -320,9 +349,7 @@ const SingleEvent = ({ type = "view", place }) => {
 
   const renderTariffField = () => (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700">
-        Тариф (взрослые)
-      </label>
+      <label className="block text-sm font-medium text-gray-700">Тариф</label>
       {mode !== "view" ? (
         <select
           name="peopleTariff"
@@ -345,6 +372,30 @@ const SingleEvent = ({ type = "view", place }) => {
     </div>
   );
 
+  const renderTimeSelectField = (label, name, value) => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {mode !== "view" ? (
+        <select
+          name={name}
+          value={value || "0"}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {TIME_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+          {TIME_OPTIONS.find((opt) => opt.value === value)?.label || "—"}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="w-full p-6 bg-white rounded-lg shadow-md mt-[11vh]">
       <div className="flex justify-between items-start mb-6">
@@ -352,6 +403,7 @@ const SingleEvent = ({ type = "view", place }) => {
           <h2 className="text-2xl font-bold text-gray-800">
             {mode === "view" ? "Детали записи" : "Редактирование записи"}
           </h2>
+
           <div
             className={`${
               STATUS_COLORS[eventData.status]
@@ -360,7 +412,11 @@ const SingleEvent = ({ type = "view", place }) => {
             {eventData.status}
           </div>
         </div>
-
+        <StatusCheckboxes
+          status={eventData.status}
+          onStatusChange={handleStatusChange}
+          mode={mode}
+        />
         <div className="flex space-x-2">
           {mode === "view" ? (
             <button
@@ -505,7 +561,7 @@ const SingleEvent = ({ type = "view", place }) => {
               true,
               "number"
             ),
-            renderTariffField(),
+            !eventData.isAmeteur && renderTariffField(),
             ...(eventData.isAmeteur
               ? [
                   renderField(
@@ -515,25 +571,8 @@ const SingleEvent = ({ type = "view", place }) => {
                     true,
                     "number"
                   ),
-                  renderField(
-                    "Тариф для детей",
-                    eventData.childrenTariff,
-                    "childrenTariff",
-                    true,
-                    "number"
-                  ),
                 ]
               : []),
-            renderSelectField(
-              "Статус",
-              "status",
-              [
-                { value: "Новое", label: "Новое" },
-                { value: "Ждем предоплату", label: "Ждем предоплату" },
-                { value: "Предоплата внесена", label: "Предоплата внесена" },
-              ],
-              eventData.status
-            ),
           ])}
 
           <div className="p-4 bg-white rounded shadow">
@@ -554,7 +593,7 @@ const SingleEvent = ({ type = "view", place }) => {
                           { value: "Стандарт", label: "Стандарт" },
                           { value: "ВИП", label: "ВИП" },
                         ],
-                        eventData.childPlan
+                        eventData.peopleTariff
                       ),
                       renderField(
                         "Возраст детей",
@@ -577,7 +616,18 @@ const SingleEvent = ({ type = "view", place }) => {
                         "number"
                       ),
                     ]
-                  : []),
+                  : [
+                      renderTimeSelectField(
+                        "Доп. аренда (часы)",
+                        "additionalTime",
+                        eventData.additionalTime
+                      ),
+                      renderTimeSelectField(
+                        "Доп. ведущий (часы)",
+                        "additionalTimeWithHost",
+                        eventData.additionalTimeWithHost
+                      ),
+                    ]),
               ].filter(Boolean)}
             </div>
           </div>

@@ -4,7 +4,7 @@ import { BASIC_URL } from "./userApi";
 export const waitingsApi = createApi({
   reducerPath: "waitingsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `https://coursehunters.by/waitings`,
+    baseUrl: `http://localhost:5000/waitings`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);
