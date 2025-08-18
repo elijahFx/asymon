@@ -10,13 +10,11 @@ const STATUS_COLORS = {
   Новое: "bg-red-500",
   "Ждем предоплату": "bg-orange-400",
   "Предоплата внесена": "bg-[#3174AD]",
+  Просмотр: "gray",
 };
 
-const CalendarEventComponent = ({ event }) => {
+const CalendarEventComponent = ({ event, view }) => {
   const navigate = useNavigate();
-
-  const isAmeteur = event.isAmateur === 0 ? "Взрослый" : "Детский"
-  
 
   const [deleteBunker] = useDeleteBunkerEventMutation();
   const [deleteJungle] = useDeleteJungleEventMutation();
@@ -31,6 +29,8 @@ const CalendarEventComponent = ({ event }) => {
           return `/jungle/event/${event.id}`;
         case "bunker":
           return `/bunker/event/${event.id}`;
+        case "view":
+          return `/views/${event.id}`;
         case "monopoly":
         default:
           return `/event/${event.id}`;
@@ -46,7 +46,9 @@ const CalendarEventComponent = ({ event }) => {
 
     const toastId = toast.info(
       <div className="max-w-xs p-2">
-        <div className="mb-3 text-sm">Вы уверены, что хотите удалить мероприятие?</div>
+        <div className="mb-3 text-sm">
+          Вы уверены, что хотите удалить мероприятие?
+        </div>
         <div className="flex gap-2 justify-end">
           <button
             onClick={(e) => {
@@ -113,32 +115,81 @@ const CalendarEventComponent = ({ event }) => {
   };
 
   const eventColor = STATUS_COLORS[event.status] || "bg-gray-500";
+  const isAmateur = event.isAmateur === 0 ? "Взрослый" : "Детский";
+
+  // Форматируем время для отображения
+  const formatTime = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toTimeString().slice(0, 5);
+  };
+
+  // Определяем стили и контент в зависимости от типа представления
+  const getEventContent = () => {
+    switch (event.view) {
+      case "month":
+        return (
+          <div className="text-center text-xs font-medium">
+            {formatTime(event.start)}-{formatTime(event.end)}
+          </div>
+        );
+      case "week":
+      case "day":
+      case "agenda":
+        return (
+          <>
+            <div className="flex justify-between items-start">
+              <div className="text-sm font-medium">
+                {formatTime(event.start)}-{formatTime(event.end)}
+              </div>
+              <div className="text-xs bg-white/20 px-1 mr-5 rounded">
+                {isAmateur}
+              </div>
+            </div>
+            <div className="text-xs mt-1 font-medium">
+              {event.resource.name}
+            </div>
+            <div className="text-xs mt-1">{event.resource.phone}</div>
+            {event.resource?.place && (
+              <div className="text-xs italic mt-1">
+                {event.resource.place === "jungle"
+                  ? "Джуманджи"
+                  : event.resource.place === "bunker"
+                  ? "Бункер"
+                  : "Монополия"}
+              </div>
+            )}
+            <div className="text-xs italic mt-1">
+              Пожелания: {event.resource.wishes || "-"}
+            </div>
+          </>
+        );
+      default:
+        return (
+          <div className="text-center text-sm font-medium">
+            {formatTime(event.start)}-{formatTime(event.end)}
+          </div>
+        );
+    }
+  };
 
   return (
     <div
       onClick={handleClick}
-      className={`${eventColor} text-white p-1 rounded cursor-pointer hover:opacity-90 transition-opacity relative`}
+      className={`${eventColor} text-white p-1 rounded cursor-pointer hover:opacity-90 transition-opacity relative h-full flex flex-col ${
+        view === "month" ? "justify-center" : ""
+      }`}
     >
       <button
         onClick={confirmDelete}
-        className="cursor-pointer delete-btn absolute -top-0 -right-0 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors"
+        className={`cursor-pointer delete-btn absolute ${
+          view === "month" ? "-top-1 -right-1" : "top-1 right-1"
+        } bg-white rounded-full p-0.5 shadow-md hover:bg-gray-100 transition-colors`}
         aria-label="Удалить мероприятие"
       >
-        <X size={14} className="text-gray-700" />
+        <X size={view === "month" ? 12 : 14} className="text-gray-700" />
       </button>
 
-      <strong className="pr-4 block">{event.title}</strong>
-      <small className="pr-4 block">{event.resource.phone}</small>
-      <div className="text-xs">{isAmeteur}</div>
-      {event.resource?.place && (
-        <div className="text-xs italic mt-1">
-          {event.resource.place === "jungle"
-            ? "Джуманджи"
-            : event.resource.place === "bunker"
-            ? "Бункер"
-            : "Монополия"}
-        </div>
-      )}
+      {getEventContent()}
     </div>
   );
 };

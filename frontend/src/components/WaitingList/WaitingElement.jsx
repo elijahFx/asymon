@@ -42,7 +42,7 @@ const WaitingElement = ({ place }) => {
   useEffect(() => {
     if (data) {
       setOriginalData(data);
-      setEventData({ ...data });
+      setEventData({ ...data, time: data.start ? `${data.start} - ${data.end}` : data.time });
     }
   }, [data]);
 

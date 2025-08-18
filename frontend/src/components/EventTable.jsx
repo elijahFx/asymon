@@ -12,6 +12,9 @@ export default function EventTable({ todaysDate, allEvents, loading, error }) {
   
   const eventsForToday = allEvents.filter(event => {
     const eventDate = new Date(event.start);
+
+
+    
     
     return (
       eventDate.getDate() === selectedDate.getDate() &&
@@ -19,6 +22,9 @@ export default function EventTable({ todaysDate, allEvents, loading, error }) {
       eventDate.getFullYear() === selectedDate.getFullYear()
     );
   });
+
+  
+    console.log(eventsForToday);
 
   const noEvents = <div className="text-center py-4 text-gray-500">На этот день нет событий</div>;
 
@@ -38,13 +44,14 @@ export default function EventTable({ todaysDate, allEvents, loading, error }) {
                 id={event.id}
                 time={`${formatTime(event.start)}-${formatTime(event.end)}`}
                 eventType={event.resource.place}
-                clientName={event.title.split(' (')[0]}
+                clientName={event.resource.name}
                 phoneNumber={event.title.match(/\(([^)]+)\)/)?.[1] || ""}
                 admin={event.resource.nickname || "Не указан"}
                 adultsCount={event.resource.people}
                 childrenCount={event.resource.children}
                 notes={event.resource.wishes}
                 place={event.resource.place}
+                status={event.status}
               />
             ))
           ) : (

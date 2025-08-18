@@ -205,6 +205,7 @@ const WaitingList = ({ place, type }) => {
                   formatDate={formatDate}
                   type={place}
                   place={place}
+                  time={`${item.start} - ${item.end}`}
                 />
               ))}
             </tbody>

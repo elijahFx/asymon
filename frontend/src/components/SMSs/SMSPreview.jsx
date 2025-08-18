@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 
-// Функция для выделения ссылок в тексте
 const formatMessage = (text) => {
   if (!text) return null;
   
@@ -31,7 +30,6 @@ const SMSPreview = () => {
   const { text } = useSelector((state) => state.sms || "Даров");
   const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Анимация iPhone
   const phoneAnimation = {
     hidden: { y: 100, opacity: 0 },
     visible: {
@@ -46,12 +44,12 @@ const SMSPreview = () => {
   };
 
   return (
-    <div className="w-full lg:w-1/2 h-[calc(100vh-16vh)] flex items-center justify-center p-2">
+    <div className="w-full lg:w-1/2 flex items-center justify-center p-4">
       <motion.div
         initial="hidden"
         animate="visible"
         variants={phoneAnimation}
-        className="relative bg-black rounded-[36px] p-2 h-[76.5vh] w-[255px] shadow-xl border-[6px] border-black"
+        className="relative bg-black rounded-[36px] p-2 h-[min(76.5vh,700px)] w-[min(255px,100%)] shadow-xl border-[6px] border-black"
       >
         {/* Верхняя панель iPhone */}
         <div className="absolute top-3 left-1/2 transform -translate-x-1/2 flex items-center z-10">

@@ -2,11 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Phone, User, Calendar, Clock } from "lucide-react";
 
-const WaitingRow = ({ item, formatDate, type, place }) => {
+const WaitingRow = ({ item, formatDate, type, place, time }) => {
   // Определяем маршрут для редактирования
   const getEditRoute = () => {
     return `/${type}/${item.id}`;
   };
+
+  console.log(item);
+  
 
   return (
     <tr className="hover:bg-gray-50">
@@ -24,7 +27,7 @@ const WaitingRow = ({ item, formatDate, type, place }) => {
           <div className="flex items-center">
             <Clock className="mr-2 text-gray-400" size={16} />
             <div className="text-sm text-gray-900">
-              {item.time || "—"}
+              {time || "—"}
             </div>
           </div>
         </td>

@@ -11,25 +11,30 @@ export default function SingleUsualEvent({
   adultsCount,
   childrenCount,
   notes,
+  status = "Просмотр"
 }) {
   // Цвета для разных типов событий
   const typeColors = {
     monopoly: "#EF4444", // red
-    jungle: "#10B981",  // green
-    bunker: "#F59E0B"   // yellow
+    jungle: "#10B981", // green
+    bunker: "#F59E0B", // yellow
   };
+
+  console.log(eventType);
 
   // Формируем путь в зависимости от типа события
   const getEventPath = () => {
-    switch(eventType.toLowerCase()) {
-      case 'монополия':
-      case 'monopoly':
+    switch (eventType.toLowerCase()) {
+      case "монополия":
+      case "monopoly":
         return `/event/${id}`;
-      case 'джуманджи':
-      case 'jungle':
+      case "джуманджи":
+      case "jungle":
         return `/jungle/event/${id}`;
-      case 'бункер':
-      case 'bunker':
+      case "view":
+        return `/views/${id}`;
+      case "бункер":
+      case "bunker":
         return `/bunker/event/${id}`;
       default:
         return `/event/${id}`;
@@ -45,7 +50,7 @@ export default function SingleUsualEvent({
     >
       <div className="flex justify-between items-start">
         <div className="font-bold text-lg">{time}</div>
-        <span 
+        <span
           className="px-2 py-1 rounded text-xs font-medium text-white"
           style={{ backgroundColor: borderColor }}
         >
@@ -60,10 +65,11 @@ export default function SingleUsualEvent({
 
       <div className="mt-2">
         <div className="text-sm">
-          <span className="font-medium">Админ:</span> {admin}
+          <span className="font-medium">Статус:</span> {status}
         </div>
         <div className="text-sm">
-          <span className="font-medium">Участники:</span> {adultsCount} взрослых, {childrenCount} детей
+          <span className="font-medium">Участники:</span> {adultsCount}{" "}
+          взрослых, {childrenCount} детей
         </div>
       </div>
 
@@ -74,7 +80,7 @@ export default function SingleUsualEvent({
       )}
 
       <div className="mt-3 pt-2 border-t border-gray-100">
-        <Link 
+        <Link
           to={getEventPath()}
           className="text-sm text-blue-600 hover:text-blue-800"
         >

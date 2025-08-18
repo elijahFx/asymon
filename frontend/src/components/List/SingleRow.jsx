@@ -9,6 +9,8 @@ const SingleRow = ({ event, calculateTotalCost, formatDate, type }) => {
     setWhatType(type);
   }, [type, event]);
 
+  console.log(event);
+
   // Determine the correct route based on event type
   const getEventRoute = () => {
     switch (whatType) {
@@ -18,6 +20,8 @@ const SingleRow = ({ event, calculateTotalCost, formatDate, type }) => {
         return `/jungle/event/${event.id}`;
       case "bunker":
         return `/bunker/event/${event.id}`;
+      case "views":
+        return `/views/${event.id}`;
       default:
         return `/event/${event.id}`;
     }
@@ -27,7 +31,8 @@ const SingleRow = ({ event, calculateTotalCost, formatDate, type }) => {
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-medium text-gray-900">
-          {event.place || "—"}
+          {event.place || ""}
+          {event.location && event.location}
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -35,12 +40,12 @@ const SingleRow = ({ event, calculateTotalCost, formatDate, type }) => {
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">
-          {event.start && event.end ? `${event.start} - ${event.end}` : "—"}
+          {event.start && event.end ? `${event.start} - ${event.end}` : ""}
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">
-          {calculateTotalCost(event)} Br
+          {isNaN(calculateTotalCost(event)) ? "0" : calculateTotalCost(event)} Br
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -50,6 +55,7 @@ const SingleRow = ({ event, calculateTotalCost, formatDate, type }) => {
           }`}
         >
           {event.status}
+          {event.type === "views" && "Просмотр"}
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">

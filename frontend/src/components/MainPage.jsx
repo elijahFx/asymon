@@ -50,20 +50,13 @@ export default function MainPage({ type = "monopoly" }) {
   const [view, setView] = useState("month");
   const [namesake, setNamesake] = useState("");
   const [showBigCalendar, setShowBigCalendar] = useState(true);
-
-  // Цвета для разных типов событий
-  const eventTypeColors = {
-    monopoly: "#EF4444", // red
-    jungle: "#10B981", // green
-    bunker: "#F59E0B", // yellow
-  };
+  
 
   // Определяем мутации для обновления событий
   const [updateMonopolyEvent] = useUpdateMonopolyEventMutation();
   const [updateJungleEvent] = useUpdateJungleEventMutation();
   const [updateBunkerEvent] = useUpdateBunkerEventMutation();
 
-  // Получаем нужную мутацию в зависимости от типа
   const updateEventMutation = {
     monopoly: updateMonopolyEvent,
     jungle: updateJungleEvent,
@@ -89,7 +82,6 @@ export default function MainPage({ type = "monopoly" }) {
     error: bunkerError,
   } = useGetBunkerEventsQuery();
 
-  // Определяем текущие данные в зависимости от типа
   const currentData = {
     monopoly: monopolyData,
     jungle: jungleData,
@@ -131,10 +123,9 @@ export default function MainPage({ type = "monopoly" }) {
 
   const otherMenuItems = menuItems.filter((item) => item.type !== type);
 
-  // Функция для стилизации дней в календаре
   const dayPropGetter = (date) => {
     const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 - воскресенье, 6 - суббота
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
     return {
       style: {
@@ -145,7 +136,6 @@ export default function MainPage({ type = "monopoly" }) {
     };
   };
 
-  // Устанавливаем название в зависимости от типа
   useEffect(() => {
     const namesakes = {
       monopoly: "Монополия",
@@ -155,14 +145,13 @@ export default function MainPage({ type = "monopoly" }) {
     setNamesake(namesakes[type] || "Монополия");
   }, [type]);
 
-  // Преобразование данных из API в формат для календаря
   useEffect(() => {
     if (currentData) {
-      console.log(currentData);
-
       const formattedEvents = currentData.map((event) => ({
         id: event.id,
-        title: `${event.consumerName}`,
+        title: `${formatTime(
+          new Date(`${event.date}T${event.start}`)
+        )} - ${formatTime(new Date(`${event.date}T${event.end}`))}`,
         start: new Date(`${event.date}T${event.start}`),
         end: new Date(`${event.date}T${event.end}`),
         status: event.status,
@@ -174,13 +163,15 @@ export default function MainPage({ type = "monopoly" }) {
           people: event.peopleAmount,
           children: event.childrenAmount,
           wishes: event.wishes,
-          place: type,
+          place: event.location ? "view" : type,
+          name: event.consumerName || ""
         },
         isAmateur: event.isAmeteur,
+        view: view
       }));
       setAllEvents(formattedEvents);
     }
-  }, [currentData, type]);
+  }, [currentData, type, view]);
 
   const onChangeDate = (newDate) => {
     setDate(newDate);
@@ -242,16 +233,6 @@ export default function MainPage({ type = "monopoly" }) {
     }
   };
 
-  const getEventColor = (status) => {
-    const colors = {
-      Новое: "#3b82f6",
-      "В работе": "#f59e0b",
-      "Запись подтверждена": "#10b981",
-    };
-    return colors[status] || "#6b7280";
-  };
-
-  // Функция для получения событий на конкретную дату
   const getEventsForDate = (date) => {
     return allEvents.filter((event) => {
       const eventDate = new Date(event.start);
@@ -263,14 +244,12 @@ export default function MainPage({ type = "monopoly" }) {
     });
   };
 
-  // Обработчик клика по дате в UsualCalendar
   const handleDateClick = (value) => {
     const events = getEventsForDate(value);
     console.log("События на выбранную дату:", events);
     onChangeDate(value);
   };
 
-  // Функция для подсветки дней с событиями
   const tileClassName = ({ date, view }) => {
     if (view !== "month") return null;
 
@@ -281,14 +260,12 @@ export default function MainPage({ type = "monopoly" }) {
     return null;
   };
 
-  // Функция для отображения маркеров событий в днях
   const tileContent = ({ date, view }) => {
     if (view !== "month") return null;
 
     const events = getEventsForDate(date);
     if (events.length === 0) return null;
 
-    // Собираем уникальные типы событий для этого дня
     const eventTypes = new Set();
     events.forEach((event) => eventTypes.add(event.resource.place));
 
@@ -308,6 +285,25 @@ export default function MainPage({ type = "monopoly" }) {
   };
 
   const toggleCalendarView = () => setShowBigCalendar((prev) => !prev);
+
+  // Новая функция для рендеринга временных интервалов в ячейке дня
+  const renderTimeSlots = (date) => {
+    const events = getEventsForDate(date);
+    if (events.length === 0) return null;
+
+    return (
+      <div className="absolute inset-0 p-1 overflow-y-auto">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="text-xs mb-1 p-1 rounded bg-blue-100 text-blue-800"
+          >
+            {event.title}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-row flex-1 sm:overflow-scroll max-w-full md:max-w-none">
@@ -376,15 +372,28 @@ export default function MainPage({ type = "monopoly" }) {
                   messages={messages}
                   date={date}
                   view={view}
-                  onView={setView}
+                  onView={(view2) => {
+                   setView(view2)
+                    
+                  }}
                   onNavigate={onChangeDate}
                   defaultView="month"
                   resizable
                   onEventDrop={handleEventDrop}
                   onEventResize={handleEventResize}
                   draggableAccessor={() => true}
-                  components={{ event: CalendarEventComponent }}
-                  dayPropGetter={dayPropGetter} // Добавляем кастомные стили для дней
+                  components={{
+                    event: CalendarEventComponent,
+                    month: {
+                      dateHeader: ({ date }) => (
+                        <div className="rbc-date-cell">
+                          <div>{date.getDate()}</div>
+                          {renderTimeSlots(date)}
+                        </div>
+                      ),
+                    },
+                  }}
+                  dayPropGetter={dayPropGetter}
                 />
               </div>
             </div>
@@ -447,6 +456,33 @@ const styles = `
   }
   .rbc-off-range-bg {
     background-color: transparent;
+  }
+  .rbc-date-cell {
+    position: relative;
+    height: 100%;
+  }
+  .rbc-date-cell > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 2px;
+  }
+  .rbc-date-cell .time-slot {
+    font-size: 10px;
+    margin: 1px 0;
+    padding: 1px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+  .rbc-event,
+  .rbc-background-event {
+  padding: 0px; !important;
+  border: none; !important;
+  }
+  .rbc-event-label {
+  display: none; !important
   }
 `;
 

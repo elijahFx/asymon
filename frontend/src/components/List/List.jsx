@@ -1,28 +1,27 @@
 import React, { useState } from "react";
-import { useGetEventsFromAllQuery, useGetMonopolyEventsQuery } from "../../apis/monopolyEventsApi";
+import { useGetEventsFromAllQuery } from "../../apis/monopolyEventsApi";
 import SingleRow from "./SingleRow";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination";
+import { calculateEventCost } from "../../utils/eventCalculations";
 
 const List = () => {
   const { data: events, isLoading, error } = useGetEventsFromAllQuery();
+  console.log(events);
+
   const [filters, setFilters] = useState({
     place: "Все",
     status: "Все",
     date: "",
-    createdAt: ""
+    createdAt: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Количество элементов на странице
 
   // Функция для расчета общей стоимости
   const calculateTotalCost = (event) => {
-    const peopleCost =
-      parseFloat(event.peopleAmount || 0) * parseFloat(event.peopleTariff || 0);
-    const childrenCost =
-      parseFloat(event.childrenAmount || 0) *
-      parseFloat(event.childrenTariff || 0);
-    return (peopleCost + childrenCost).toFixed(2);
+    const costs = calculateEventCost(event);
+    return costs.finalCost.toFixed(2);
   };
 
   // Функция для форматирования даты
@@ -37,28 +36,31 @@ const List = () => {
     if (filters.place !== "Все" && event.place !== filters.place) {
       return false;
     }
-    
+
     // Фильтр по статусу
     if (filters.status !== "Все" && event.status !== filters.status) {
       return false;
     }
-    
+
     // Фильтр по дате мероприятия
     if (filters.date && formatDate(event.date) !== formatDate(filters.date)) {
       return false;
     }
-    
+
     // Фильтр по дате добавления
-    if (filters.createdAt && formatDate(event.createdAt) !== formatDate(filters.createdAt)) {
+    if (
+      filters.createdAt &&
+      formatDate(event.createdAt) !== formatDate(filters.createdAt)
+    ) {
       return false;
     }
-    
+
     return true;
   };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
     setCurrentPage(1); // Сбрасываем на первую страницу при изменении фильтров
   };
 
@@ -67,14 +69,14 @@ const List = () => {
       place: "Все",
       status: "Все",
       date: "",
-      createdAt: ""
+      createdAt: "",
     });
     setCurrentPage(1); // Сбрасываем на первую страницу при сбросе фильтров
   };
 
   // Фильтруем события
   const filteredEvents = events?.filter(filterEvents) || [];
-  
+
   // Получаем события для текущей страницы
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -110,7 +112,9 @@ const List = () => {
         {/* Блок фильтров */}
         <div className="p-4 border-b grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Место</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Место
+            </label>
             <select
               name="place"
               value={filters.place}
@@ -125,7 +129,9 @@ const List = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Статус
+            </label>
             <select
               name="status"
               value={filters.status}
@@ -140,7 +146,9 @@ const List = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата мероприятия</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Дата мероприятия
+            </label>
             <input
               type="date"
               name="date"
@@ -151,7 +159,9 @@ const List = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата добавления</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Дата добавления
+            </label>
             <input
               type="date"
               name="createdAt"

@@ -6,6 +6,7 @@ import { jungleEventsApi } from "./apis/jungleEventsApi";
 import { bunkerEventsApi } from "./apis/bunkerEventsApi";
 import { waitingsApi } from "./apis/waitingsApi";
 import { viewsApi } from "./apis/viewsApi";
+import { smsApi } from "./apis/smsApi";
 import authReducer from "./slices/authSlice";
 import smsReducer from "./slices/smsSlice"
 
@@ -18,6 +19,7 @@ export const store = configureStore({
     [bunkerEventsApi.reducerPath]: bunkerEventsApi.reducer,
     [waitingsApi.reducerPath]: waitingsApi.reducer,
     [viewsApi.reducerPath]: viewsApi.reducer,
+    [smsApi.reducerPath]: smsApi.reducer,
     auth: authReducer,
     sms: smsReducer,
   },
@@ -28,7 +30,8 @@ export const store = configureStore({
       .concat(jungleEventsApi.middleware)
       .concat(bunkerEventsApi.middleware)
       .concat(waitingsApi.middleware)
-      .concat(viewsApi.middleware),
+      .concat(viewsApi.middleware)
+      .concat(smsApi.middleware)
 });
 
 setupListeners(store.dispatch);

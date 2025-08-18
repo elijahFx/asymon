@@ -3,6 +3,7 @@ const Legend = () => {
     { color: "bg-red-500", label: "Новое – путь для внесения предоплаты не направлен" },
     { color: "bg-orange-400", label: "Ждем предоплату – путь для внесения предоплаты направлен" },
     { color: "bg-[#3174AD]", label: "Предоплата внесена – деньги уплачены" },
+    { color: "gray", label: "Просмотр - осмотр помещения" },
   ];
 
   return (
@@ -11,7 +12,7 @@ const Legend = () => {
       <div className="flex flex-col gap-2">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center gap-2">
-            <div className={`w-4 h-4 ${item.color}`}></div>
+            <div style={{backgroundColor: item.color}} className={`w-4 h-4 ${item.color}`}></div>
             <span className="text-sm">{item.label}</span>
           </div>
         ))}

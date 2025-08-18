@@ -25,6 +25,7 @@ import {
 
 import { STATUS_COLORS } from "../../utils/types";
 import StatusCheckboxes from "../SmallStuff/StatusCheckboxes";
+import { calculateEventCost } from "../../utils/eventCalculations";
 
 // Добавляем константу с вариантами мессенджеров
 const MESSENGERS = [
@@ -193,7 +194,7 @@ const handleStatusChange = async (newStatus) => {
     finalCost,
     prepaymentAmount,
     remainingAmount,
-  } = calculateFinancials();
+  } = calculateEventCost(eventData);
 
   const handleEditEvent = () => setMode("edit");
 

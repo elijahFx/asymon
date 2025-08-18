@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require("uuid");
 const createDbConnection = require("../db");
+const { getEventTableByLocation, checkScheduleConflicts } = require("../utils/utils_mini");
 
 // Получение всех просмотров
 const getAllViews = async (req, res) => {
@@ -50,33 +51,39 @@ const addView = async (req, res) => {
   let connection;
   try {
     connection = await createDbConnection();
-    const {
-      user_id,
-      date,
-      time,
-      name,
-      phone,
-      note,
-      location
-    } = req.body;
+    const { user_id, date, start, end, name, phone, note, location } = req.body;
+
+    // Проверка на конфликты в расписании
+    const eventTable = getEventTableByLocation(location);
+    const conflictEvents = await checkScheduleConflicts(connection, eventTable, date, start, end, location);
+
+    if (conflictEvents.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Конфликт расписания",
+        conflicts: conflictEvents,
+        message: `В выбранное время уже есть мероприятие в ${location} или оно слишком близко к другому мероприятию (минимум 30 минут между событиями). Пожалуйста, выберите другое время.`,
+      });
+    }
 
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
     await connection.execute(
       `INSERT INTO views (
-        id, user_id, createdAt, date, time, name, phone, note, location
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, user_id, createdAt, date, start, end, name, phone, note, location
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user_id,
         createdAt,
         date,
-        time,
+        start,
+        end,
         name,
         phone,
         note || null,
-        location
+        location,
       ]
     );
 
@@ -97,7 +104,6 @@ const addView = async (req, res) => {
   }
 };
 
-// Обновление просмотра
 const updateView = async (req, res) => {
   let connection;
   try {
@@ -107,11 +113,12 @@ const updateView = async (req, res) => {
     const fields = [
       "user_id",
       "date",
-      "time",
+      "start",
+      "end",
       "name",
       "phone",
       "note",
-      "location"
+      "location",
     ];
 
     const updates = fields
@@ -128,6 +135,40 @@ const updateView = async (req, res) => {
         success: false,
         error: "No fields to update",
       });
+    }
+
+    // Проверка на конфликты в расписании, если обновляются date, start, end или location
+    if (req.body.date || req.body.start || req.body.end || req.body.location) {
+      // Получаем текущие или новые значения
+      const [currentView] = await connection.execute(
+        `SELECT date, start, end, location FROM views WHERE id = ?`,
+        [id]
+      );
+
+      const date = req.body.date || currentView[0].date;
+      const start = req.body.start || currentView[0].start;
+      const end = req.body.end || currentView[0].end;
+      const location = req.body.location || currentView[0].location;
+
+      const eventTable = getEventTableByLocation(location);
+      const conflictEvents = await checkScheduleConflicts(
+        connection, 
+        eventTable, 
+        date, 
+        start, 
+        end, 
+        location, 
+        id // Исключаем текущее событие из проверки
+      );
+
+      if (conflictEvents.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Конфликт расписания",
+          conflicts: conflictEvents,
+          message: `В выбранное время уже есть мероприятие в ${location} или оно слишком близко к другому мероприятию (минимум 30 минут между событиями). Пожалуйста, выберите другое время.`,
+        });
+      }
     }
 
     values.push(id);
@@ -159,7 +200,6 @@ const updateView = async (req, res) => {
     if (connection) await connection.end();
   }
 };
-
 // Удаление просмотра
 const deleteView = async (req, res) => {
   let connection;

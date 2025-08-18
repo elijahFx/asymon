@@ -1,8 +1,5 @@
 import React, { useState } from "react";
-import {
-  Check,
-  X,
-} from "lucide-react";
+import { Check, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAddWaitingMutation } from "../../apis/waitingsApi";
 import { useAddViewMutation } from "../../apis/viewsApi";
@@ -13,14 +10,15 @@ const AddWaitingList = ({ place }) => {
 
   const initialState = {
     date: "",
-    time: "",
+    startTime: "19:00", // Начальное время начала
+    endTime: "20:00", // Начальное время окончания
     phoneNumber: "",
     consumerName: "",
     note: "",
-    location: "", // 🔥 Добавлено
+    location: "",
   };
 
-  const [addView] = useAddViewMutation();
+  const [addView, { error }] = useAddViewMutation();
   const [addWaiting] = useAddWaitingMutation();
 
   const [formData, setFormData] = useState(initialState);
@@ -33,17 +31,33 @@ const AddWaitingList = ({ place }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    if(error) newErrors.message = "На это время уже есть мероприятие, либо необходим 29-минутный интервал";
     if (!formData.date) newErrors.date = "Укажите дату";
     if (!formData.phoneNumber) newErrors.phoneNumber = "Укажите телефон";
     if (!formData.consumerName) newErrors.consumerName = "Укажите имя";
-    if (!formData.location) newErrors.location = "Укажите место"; // 🔥
-    if (place === "views" && !formData.time) newErrors.time = "Укажите время";
+    if (!formData.location) newErrors.location = "Укажите место";
+    if (place === "views") {
+      if (!formData.startTime) newErrors.startTime = "Укажите время начала";
+      if (!formData.endTime) newErrors.endTime = "Укажите время окончания";
+      if (
+        formData.startTime &&
+        formData.endTime &&
+        formData.startTime >= formData.endTime
+      ) {
+        newErrors.endTime = "Время окончания должно быть позже начала";
+      }
+
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) {
+      if(errors.message) {
+        toast.error(errors.message)
+        return
+      }
       toast.error("Пожалуйста, заполните обязательные поля");
       return;
     }
@@ -52,8 +66,12 @@ const AddWaitingList = ({ place }) => {
       date: formData.date,
       phone: formData.phoneNumber,
       name: formData.consumerName,
-      location: formData.location, // 🔥
-      ...(place === "views" && { time: formData.time, note: formData.note }),
+      location: formData.location,
+      ...(place === "views" && {
+        start: formData.startTime, // Отдельное поле для времени начала
+        end: formData.endTime, // Отдельное поле для времени окончания
+        note: formData.note,
+      }),
       place,
       user_id: user_id,
     };
@@ -82,8 +100,6 @@ const AddWaitingList = ({ place }) => {
       </h2>
 
       <div className="space-y-4">
-
-        {/* 🔥 Выпадающий список мест */}
         <div>
           <label className="block text-sm font-medium">Место *</label>
           <select
@@ -115,20 +131,41 @@ const AddWaitingList = ({ place }) => {
         </div>
 
         {place === "views" && (
-          <div>
-            <label className="block text-sm font-medium">Время *</label>
-            <input
-              type="time"
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border ${
-                errors.time ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium">Начало *</label>
+              <input
+                type="time"
+                name="startTime"
+                value={formData.startTime}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border ${
+                  errors.startTime ? "border-red-500" : "border-gray-300"
+                } rounded`}
+              />
+              {errors.startTime && (
+                <p className="text-red-500 text-xs mt-1">{errors.startTime}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Окончание *</label>
+              <input
+                type="time"
+                name="endTime"
+                value={formData.endTime}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border ${
+                  errors.endTime ? "border-red-500" : "border-gray-300"
+                } rounded`}
+              />
+              {errors.endTime && (
+                <p className="text-red-500 text-xs mt-1">{errors.endTime}</p>
+              )}
+            </div>
           </div>
         )}
 
+        {/* Остальные поля формы остаются без изменений */}
         <div>
           <label className="block text-sm font-medium">Телефон *</label>
           <input

@@ -22,6 +22,7 @@ import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SmartTimeInput from "./SmallStuff/SmartTimeInput.jsx";
+import { calculateEventCost } from "../utils/eventCalculations.js";
 
 const MESSENGERS = [
   { value: "Viber", label: "Viber" },
@@ -36,15 +37,6 @@ const ADULT_TARIFFS = [
   { value: "Тариф 2", label: "Тариф 2" },
   { value: "Тариф 3", label: "Тариф 3" },
 ];
-
-// Добавляем варианты для дополнительного времени с шагом 0.5 часа
-const ADDITIONAL_TIME_OPTIONS = Array.from(
-  { length: 13 },
-  (_, i) => i * 0.5
-).map((value) => ({
-  value: value.toString(),
-  label: value === 0 ? "Нет" : `${value} ч`,
-}));
 
 const AddEvent = () => {
   const user_id = useSelector((state) => state.auth.id);
@@ -78,9 +70,9 @@ const AddEvent = () => {
     childAge: "",
   };
 
-  const [addBunker] = useAddBunkerEventMutation();
-  const [addJungle] = useAddJungleEventMutation();
-  const [addMonopoly] = useAddMonopolyEventMutation();
+  const [addBunker, { error, isLoading }] = useAddBunkerEventMutation();
+  const [addJungle, { jungleError, jungleIsLoading }] = useAddJungleEventMutation();
+  const [addMonopoly, { monopolyError, monopolyIsLoading }] = useAddMonopolyEventMutation();
 
   const [place, setPlace] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
@@ -90,7 +82,6 @@ const AddEvent = () => {
   const [errors, setErrors] = useState({});
 
   console.log(formData);
-  
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -100,24 +91,9 @@ const AddEvent = () => {
   }, [ageGroup]);
 
   useEffect(() => {
-    const childrenCost =
-      (parseFloat(formData.childrenTariff) || 0) *
-      (parseInt(formData.childrenAmount) || 0);
-    const adultsCost =
-      (parseFloat(formData.peopleTariff) || 0) *
-      ((parseInt(formData.peopleAmount) || 0) -
-        (parseInt(formData.childrenAmount) || 0));
-    const calculatedTotal = childrenCost + adultsCost;
-    setTotalCost(calculatedTotal);
-
-    const discountValue = parseFloat(formData.discount) || 0;
-    const calculatedFinal =
-      calculatedTotal - (calculatedTotal * discountValue) / 100;
-
-    const prepayment = formData.isPaid
-      ? parseFloat(formData.prepayment) || 0
-      : 0;
-    setFinalCost(calculatedFinal);
+      const costs = calculateEventCost(formData);
+    setTotalCost(costs.totalCost);
+    setFinalCost(costs.finalCost);
   }, [
     formData.childrenTariff,
     formData.childrenAmount,
@@ -126,6 +102,9 @@ const AddEvent = () => {
     formData.discount,
     formData.prepayment,
     formData.isPaid,
+    formData.additionalTime,
+    formData.additionalTimeWithHost,
+    formData.isAmeteur
   ]);
 
   const validateForm = () => {
@@ -178,9 +157,13 @@ const AddEvent = () => {
       errorMessages.push("• Тариф для взрослых");
     }
 
-     if (ageGroup === "Детский" && !formData.peopleTariff) {
+    if (ageGroup === "Детский" && !formData.peopleTariff) {
       newErrors.peopleTariff = "Укажите тариф для взрослых";
       errorMessages.push("• Тариф для взрослых");
+    }
+
+    if(error || monopolyError || jungleError) {
+      errorMessages.push("После мероприятия необходим интервал в 29 минут")
     }
 
     setErrors(newErrors);
@@ -585,9 +568,9 @@ const AddEvent = () => {
                         <Gift className="text-gray-400 mr-2" />
                         <div className="w-48 font-medium text-gray-700">
                           План (дети)
-                            <span className="text-red-500 ml-1">*</span>:
+                          <span className="text-red-500 ml-1">*</span>:
                         </div>
-                       
+
                         <div className="w-full">
                           <select
                             name="peopleTariff"
@@ -665,7 +648,7 @@ const AddEvent = () => {
                                 additionalTimeWithHost: value,
                               }))
                             }
-                             onBlur={(value) =>
+                            onBlur={(value) =>
                               setFormData((prev) => ({
                                 ...prev,
                                 additionalTimeWithHost: value,

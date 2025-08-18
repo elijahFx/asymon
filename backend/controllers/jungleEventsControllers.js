@@ -1,16 +1,28 @@
 const { v4: uuidv4 } = require("uuid");
 const createDbConnection = require("../db");
+const { adjustTime } = require("../utils/utils_mini");
 
 const getAllEvents = async (req, res) => {
   let connection;
   try {
     connection = await createDbConnection();
 
-    const [rows] = await connection.execute(
+    // Получаем события отдельно
+    const [jungleEvents] = await connection.execute(
       `SELECT * FROM jungle_events ORDER BY createdAt DESC`
     );
 
-    res.status(200).json(rows);
+    // Получаем просмотры отдельно
+    const [views] = await connection.execute(
+      `SELECT * FROM views WHERE location = 'Джуманджи' ORDER BY createdAt DESC`
+    );
+
+    // Объединяем результаты на уровне JavaScript
+    const combinedResults = [...jungleEvents, ...views].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json(combinedResults);
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -74,12 +86,12 @@ const addEvent = async (req, res) => {
       childAge,
       additionalTime,
       adultsWithChildrenAmount,
-      additionalTimeWithHost
+      additionalTimeWithHost,
     } = req.body;
 
-    // Проверка на пересечение времен
-    const [existingEvents] = await connection.execute(
-      `SELECT id, start, end FROM jungle_events 
+    // 1. Проверка пересечений в jungle_events
+    const [jungleConflicts] = await connection.execute(
+      `SELECT id FROM jungle_events 
        WHERE date = ? AND (
          (start < ? AND end > ?) OR
          (start < ? AND end > ?) OR
@@ -88,24 +100,29 @@ const addEvent = async (req, res) => {
       [date, end, start, start, end, start, end]
     );
 
-    if (existingEvents.length > 0) {
+    // 2. Проверка пересечений в views (только Джуманджи)
+    const [viewConflicts] = await connection.execute(
+      `SELECT id FROM views 
+       WHERE date = ? AND location = 'Джуманджи' AND (
+         (start < ? AND end > ?) OR
+         (start < ? AND end > ?) OR
+         (start >= ? AND end <= ?)
+       )`,
+      [date, end, start, start, end, start, end]
+    );
+
+    if (jungleConflicts.length > 0 || viewConflicts.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "на это время уже есть запись в Джуманджи",
+        message: "На это время уже есть запись в Джуманджи",
       });
     }
 
-    // Проверка 30-минутных буферов
-    const startTime = new Date(`${date}T${start}`);
-    const endTime = new Date(`${date}T${end}`);
-    const bufferStart = new Date(startTime.getTime() - 29 * 60000)
-      .toISOString()
-      .substr(11, 8);
-    const bufferEnd = new Date(endTime.getTime() + 29 * 60000)
-      .toISOString()
-      .substr(11, 8);
+    // 3. Проверка 29-минутных буферов для jungle_events
+    const bufferStart = adjustTime(start, -29);
+    const bufferEnd = adjustTime(end, 29);
 
-    const [bufferConflicts] = await connection.execute(
+    const [jungleBufferConflicts] = await connection.execute(
       `SELECT id FROM jungle_events 
        WHERE date = ? AND (
          (start < ? AND end > ?) OR
@@ -114,14 +131,24 @@ const addEvent = async (req, res) => {
       [date, start, bufferStart, bufferEnd, end]
     );
 
-    if (bufferConflicts.length > 0) {
+    // 4. Проверка 29-минутных буферов для views (Джуманджи)
+    const [viewBufferConflicts] = await connection.execute(
+      `SELECT id FROM views 
+       WHERE date = ? AND location = 'Джуманджи' AND (
+         (start < ? AND end > ?) OR
+         (start < ? AND end > ?)
+       )`,
+      [date, start, bufferStart, bufferEnd, end]
+    );
+
+    if (jungleBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
       return res.status(400).json({
         success: false,
-        message:
-          "требуется 30-минутный перерыв до и после мероприятия в Джуманджи",
+        message: "Требуется 30-минутный перерыв до и после мероприятия",
       });
     }
 
+    // Создание записи
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
@@ -131,7 +158,8 @@ const addEvent = async (req, res) => {
         messenger, messengerNickname, isAmeteur, isPaid, user_id,
         childrenTariff, childrenAmount, peopleAmount, wishes,
         peopleTariff, discount, prepayment,
-        isBirthday, isExtr, childPlan, childAge, additionalTime, adultsWithChildrenAmount, additionalTimeWithHost
+        isBirthday, isExtr, childPlan, childAge, additionalTime, 
+        adultsWithChildrenAmount, additionalTimeWithHost
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
@@ -160,7 +188,7 @@ const addEvent = async (req, res) => {
         childAge,
         additionalTime,
         adultsWithChildrenAmount,
-        additionalTimeWithHost
+        additionalTimeWithHost,
       ]
     );
 
@@ -186,32 +214,34 @@ const updateEvent = async (req, res) => {
   try {
     connection = await createDbConnection();
     const { id } = req.params;
-    const { date, start, end } = req.body;
+    const bodyUpdates = req.body;
 
-    if (date || start || end) {
-      const [currentEvent] = await connection.execute(
+    // Если обновляются время или дата - проверяем доступность
+    if (bodyUpdates.date || bodyUpdates.start || bodyUpdates.end) {
+      const [current] = await connection.execute(
         "SELECT date, start, end FROM jungle_events WHERE id = ?",
         [id]
       );
 
-      if (!currentEvent.length) {
+      if (!current.length) {
         return res.status(404).json({
           success: false,
           error: "Event not found",
         });
       }
 
-      const finalDate = date || currentEvent[0].date;
-      const finalStart = start || currentEvent[0].start;
-      const finalEnd = end || currentEvent[0].end;
+      const finalDate = bodyUpdates.date || current[0].date;
+      const finalStart = bodyUpdates.start || current[0].start;
+      const finalEnd = bodyUpdates.end || current[0].end;
 
-      const [existingEvents] = await connection.execute(
+      // 1. Проверка пересечений в jungle_events
+      const [jungleConflicts] = await connection.execute(
         `SELECT id FROM jungle_events 
          WHERE date = ? AND id != ? AND (
            (start < ? AND end > ?) OR
            (start < ? AND end > ?) OR
            (start >= ? AND end <= ?)
-         )`,
+        )`,
         [
           finalDate,
           id,
@@ -224,40 +254,63 @@ const updateEvent = async (req, res) => {
         ]
       );
 
-      if (existingEvents.length > 0) {
+      // 2. Проверка пересечений в views (Джуманджи)
+      const [viewConflicts] = await connection.execute(
+        `SELECT id FROM views 
+         WHERE date = ? AND location = 'Джуманджи' AND (
+           (start < ? AND end > ?) OR
+           (start < ? AND end > ?) OR
+           (start >= ? AND end <= ?)
+        )`,
+        [
+          finalDate,
+          finalEnd,
+          finalStart,
+          finalStart,
+          finalEnd,
+          finalStart,
+          finalEnd,
+        ]
+      );
+
+      if (jungleConflicts.length > 0 || viewConflicts.length > 0) {
         return res.status(400).json({
           success: false,
-          message: "на это время уже есть другая запись в Джуманджи",
+          message: "На это время уже есть другая запись в Джуманджи",
         });
       }
 
-      const startTime = new Date(`${finalDate}T${finalStart}`);
-      const endTime = new Date(`${finalDate}T${finalEnd}`);
-      const bufferStart = new Date(startTime.getTime() - 29 * 60000)
-        .toISOString()
-        .substr(11, 8);
-      const bufferEnd = new Date(endTime.getTime() + 29 * 60000)
-        .toISOString()
-        .substr(11, 8);
+      // 3. Проверка буферов
+      const bufferStart = adjustTime(finalStart, -29);
+      const bufferEnd = adjustTime(finalEnd, 29);
 
-      const [bufferConflicts] = await connection.execute(
+      const [jungleBufferConflicts] = await connection.execute(
         `SELECT id FROM jungle_events 
          WHERE date = ? AND id != ? AND (
            (start < ? AND end > ?) OR
            (start < ? AND end > ?)
-         )`,
+        )`,
         [finalDate, id, finalStart, bufferStart, bufferEnd, finalEnd]
       );
 
-      if (bufferConflicts.length > 0) {
+      const [viewBufferConflicts] = await connection.execute(
+        `SELECT id FROM views 
+         WHERE date = ? AND location = 'Джуманджи' AND (
+           (start < ? AND end > ?) OR
+           (start < ? AND end > ?)
+        )`,
+        [finalDate, finalStart, bufferStart, bufferEnd, finalEnd]
+      );
+
+      if (jungleBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
         return res.status(400).json({
           success: false,
-          message:
-            "требуется 30-минутный перерыв до и после мероприятия в Джуманджи",
+          message: "Требуется 30-минутный перерыв до и после мероприятия",
         });
       }
     }
 
+    // Подготовка полей для обновления
     const fields = [
       "date",
       "start",
@@ -282,21 +335,20 @@ const updateEvent = async (req, res) => {
       "childAge",
       "additionalTime",
       "adultsWithChildrenAmount",
-      "additionalTimeWithHost"
+      "additionalTimeWithHost",
     ];
 
-    const updates = fields
-      .filter((field) => field in req.body)
-      .map((field) => `${field} = ?`)
-      .join(", ");
+    const setClauses = [];
+    const values = [];
 
-      console.log(updates)
+    fields.forEach((field) => {
+      if (bodyUpdates[field] !== undefined) {
+        setClauses.push(`${field} = ?`);
+        values.push(bodyUpdates[field]);
+      }
+    });
 
-    const values = fields
-      .filter((field) => field in req.body)
-      .map((field) => req.body[field]);
-
-    if (updates.length === 0) {
+    if (setClauses.length === 0) {
       return res.status(400).json({
         success: false,
         error: "No fields to update",
@@ -306,7 +358,7 @@ const updateEvent = async (req, res) => {
     values.push(id);
 
     const [result] = await connection.execute(
-      `UPDATE jungle_events SET ${updates} WHERE id = ?`,
+      `UPDATE jungle_events SET ${setClauses.join(", ")} WHERE id = ?`,
       values
     );
 
