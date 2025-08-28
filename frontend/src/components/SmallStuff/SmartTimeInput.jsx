@@ -1,40 +1,102 @@
-
 import { useState, useEffect } from "react";
 import { X, Plus, Check } from "lucide-react"
 
 const SmartTimeInput = ({ value, onChange, label }) => {
-  const [customValue, setCustomValue] = useState(value || '0');
+  const isMinutesMode = label === "labubu" || label === "silver";
+  
+  // Конвертируем начальное значение в зависимости от режима
+  const getInitialDisplayValue = () => {
+    if (isMinutesMode) {
+      // Для минутного режима: value уже в минутах, отображаем как есть
+      return value || '0';
+    } else {
+      // Для часового режима: value в часах, отображаем как есть
+      return value || '0';
+    }
+  };
+
+  const [displayValue, setDisplayValue] = useState(getInitialDisplayValue());
   const [isCustom, setIsCustom] = useState(false);
 
-  const commonOptions = ['0', '0.5', '1', '1.5', '2'];
+  // Определяем шаги в зависимости от label
+  const getStepOptions = () => {
+    if (label === "labubu") {
+      // Шаги по 15 минут
+      return ['0', '15', '30', '45', '60', '75', '90', '105', '120'];
+    } else if (label === "silver") {
+      // Шаги по 30 минут
+      return ['0', '30', '60', '90', '120', '150', '180', '210', '240'];
+    } else {
+      // Стандартные шаги по 0.5 часа
+      return ['0', '0.5', '1', '1.5', '2'];
+    }
+  };
+
+  const commonOptions = getStepOptions();
 
   useEffect(() => {
-    if (!commonOptions.includes(value) && value !== '0') {
+    if (!commonOptions.includes(value) && value !== '0' && value !== 0) {
       setIsCustom(true);
     }
   }, [value]);
 
+  // Функция для обработки изменения значения
+  const handleValueChange = (newDisplayValue) => {
+    if (isMinutesMode) {
+      // Для минутного режима: передаем минуты как есть
+      onChange(newDisplayValue);
+    } else {
+      // Для часового режима: передаем часы как есть
+      onChange(newDisplayValue);
+    }
+    setDisplayValue(newDisplayValue);
+  };
+
+  // Функция для форматирования отображения
+  const formatDisplay = (val) => {
+    if (isMinutesMode) {
+      return val === '0' ? 'Нет' : `${val} мин`;
+    } else {
+      return val === '0' ? 'Нет' : `${val} ч`;
+    }
+  };
+
+  // Определяем шаг для input
+  const getInputStep = () => {
+    if (label === "labubu") return "15"; // 15 минут
+    if (label === "silver") return "30"; // 30 минут
+    return "0.5"; // по умолчанию 0.5 часа
+  };
+
+  // Определяем максимальное значение
+  const getMaxValue = () => {
+    if (label === "labubu") return "1440"; // 24 часа в минутах
+    if (label === "silver") return "1440"; // 24 часа в минутах
+    return "6"; // по умолчанию 6 часов
+  };
+
+  // Определяем placeholder для input
+  const getInputPlaceholder = () => {
+    if (isMinutesMode) return "минут";
+    return "часов";
+  };
+
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      
       {!isCustom ? (
         <div className="flex flex-wrap gap-2">
           {commonOptions.map((option) => (
             <button
               key={option}
               type="button"
-              onClick={() => {
-                onChange(option);
-                setCustomValue(option);
-              }}
+              onClick={() => handleValueChange(option)}
               className={`px-3 py-1 text-sm rounded-md border ${
                 value === option
                   ? 'bg-blue-500 text-white border-blue-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              {option === '0' ? 'Нет' : `${option} ч`}
+              {formatDisplay(option)}
             </button>
           ))}
           <button
@@ -50,18 +112,18 @@ const SmartTimeInput = ({ value, onChange, label }) => {
           <input
             type="number"
             min="0"
-            max="6"
-            step="0.5"
-            value={customValue}
-            onChange={(e) => setCustomValue(e.target.value)}
-            className="border text-center block w-8 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            max={getMaxValue()}
+            step={getInputStep()}
+            value={displayValue}
+            onChange={(e) => setDisplayValue(e.target.value)}
+            className="border text-center block w-20 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
           />
-          <span>часов</span>
+          <span>{getInputPlaceholder()}</span>
           <button
             type="button"
             onClick={() => {
-              onChange(customValue);
-              if (commonOptions.includes(customValue)) {
+              handleValueChange(displayValue);
+              if (commonOptions.includes(displayValue)) {
                 setIsCustom(false);
               }
             }}
@@ -73,7 +135,7 @@ const SmartTimeInput = ({ value, onChange, label }) => {
             type="button"
             onClick={() => {
               setIsCustom(false);
-              setCustomValue(value);
+              setDisplayValue(value || '0');
             }}
             className="text-gray-500 hover:text-gray-700"
           >
@@ -85,4 +147,4 @@ const SmartTimeInput = ({ value, onChange, label }) => {
   );
 };
 
-export default SmartTimeInput
+export default SmartTimeInput;

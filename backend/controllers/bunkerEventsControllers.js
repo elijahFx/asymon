@@ -87,7 +87,12 @@ const addEvent = async (req, res) => {
       additionalTime,
       adultsWithChildrenAmount,
       additionalTimeWithHost,
+      additionalTimeWithLabubu,
+      silverTime,
     } = req.body;
+
+    console.log(JSON.stringify(req.body));
+    
 
     // 1. Проверка пересечений в bunker_events
     const [bunkerConflicts] = await connection.execute(
@@ -100,25 +105,14 @@ const addEvent = async (req, res) => {
       [date, end, start, start, end, start, end]
     );
 
-    // 2. Проверка пересечений в views (только Бункер)
-    const [viewConflicts] = await connection.execute(
-      `SELECT id FROM views 
-       WHERE date = ? AND location = 'Бункер' AND (
-         (start < ? AND end > ?) OR
-         (start < ? AND end > ?) OR
-         (start >= ? AND end <= ?)
-       )`,
-      [date, end, start, start, end, start, end]
-    );
-
-    if (bunkerConflicts.length > 0 || viewConflicts.length > 0) {
+    if (bunkerConflicts.length > 0) {
       return res.status(400).json({
         success: false,
         message: "На это время уже есть запись в Бункере",
       });
     }
 
-    // 3. Проверка 29-минутных буферов для bunker_events
+    // 2. Проверка 29-минутных буферов для bunker_events
     const bufferStart = adjustTime(start, -29);
     const bufferEnd = adjustTime(end, 29);
 
@@ -131,17 +125,7 @@ const addEvent = async (req, res) => {
       [date, start, bufferStart, bufferEnd, end]
     );
 
-    // 4. Проверка 29-минутных буферов для views (Бункер)
-    const [viewBufferConflicts] = await connection.execute(
-      `SELECT id FROM views 
-       WHERE date = ? AND location = 'Бункер' AND (
-         (start < ? AND end > ?) OR
-         (start < ? AND end > ?)
-       )`,
-      [date, start, bufferStart, bufferEnd, end]
-    );
-
-    if (bunkerBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
+    if (bunkerBufferConflicts.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Требуется 30-минутный перерыв до и после мероприятия",
@@ -159,8 +143,9 @@ const addEvent = async (req, res) => {
         childrenTariff, childrenAmount, peopleAmount, wishes,
         peopleTariff, discount, prepayment,
         isBirthday, isExtr, childPlan, childAge, additionalTime, 
-        adultsWithChildrenAmount, additionalTimeWithHost
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        adultsWithChildrenAmount, additionalTimeWithHost, additionalTimeWithLabubu,
+        silverTime
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         createdAt,
@@ -189,6 +174,8 @@ const addEvent = async (req, res) => {
         additionalTime,
         adultsWithChildrenAmount,
         additionalTimeWithHost,
+        additionalTimeWithLabubu,
+        silverTime,
       ]
     );
 
@@ -254,33 +241,14 @@ const updateEvent = async (req, res) => {
         ]
       );
 
-      // 2. Проверка пересечений в views (Бункер)
-      const [viewConflicts] = await connection.execute(
-        `SELECT id FROM views 
-         WHERE date = ? AND location = 'Бункер' AND (
-           (start < ? AND end > ?) OR
-           (start < ? AND end > ?) OR
-           (start >= ? AND end <= ?)
-        )`,
-        [
-          finalDate,
-          finalEnd,
-          finalStart,
-          finalStart,
-          finalEnd,
-          finalStart,
-          finalEnd,
-        ]
-      );
-
-      if (bunkerConflicts.length > 0 || viewConflicts.length > 0) {
+      if (bunkerConflicts.length > 0) {
         return res.status(400).json({
           success: false,
           message: "На это время уже есть другая запись в Бункере",
         });
       }
 
-      // 3. Проверка буферов
+      // 2. Проверка буферов
       const bufferStart = adjustTime(finalStart, -29);
       const bufferEnd = adjustTime(finalEnd, 29);
 
@@ -293,16 +261,7 @@ const updateEvent = async (req, res) => {
         [finalDate, id, finalStart, bufferStart, bufferEnd, finalEnd]
       );
 
-      const [viewBufferConflicts] = await connection.execute(
-        `SELECT id FROM views 
-         WHERE date = ? AND location = 'Бункер' AND (
-           (start < ? AND end > ?) OR
-           (start < ? AND end > ?)
-        )`,
-        [finalDate, finalStart, bufferStart, bufferEnd, finalEnd]
-      );
-
-      if (bunkerBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
+      if (bunkerBufferConflicts.length > 0) {
         return res.status(400).json({
           success: false,
           message: "Требуется 30-минутный перерыв до и после мероприятия",
@@ -336,6 +295,8 @@ const updateEvent = async (req, res) => {
       "additionalTime",
       "adultsWithChildrenAmount",
       "additionalTimeWithHost",
+      "additionalTimeWithLabubu",
+      "silverTime"
     ];
 
     const setClauses = [];

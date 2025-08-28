@@ -27,29 +27,9 @@ import { STATUS_COLORS } from "../../utils/types";
 import StatusCheckboxes from "../SmallStuff/StatusCheckboxes";
 import { calculateEventCost } from "../../utils/eventCalculations";
 
-// Добавляем константу с вариантами мессенджеров
-const MESSENGERS = [
-  { value: "Viber", label: "Viber" },
-  { value: "Telegram", label: "Telegram" },
-  { value: "WhatsApp", label: "WhatsApp" },
-  { value: "Instagram", label: "Instagram" },
-];
+import { TIME_OPTIONS, TIME_OPTIONS_LABUBU, TIME_OPTIONS_SILVER, MESSENGERS, ADULT_TARIFFS } from "../../utils/timeConfig";
 
-const ADULT_TARIFFS = [
-  { value: "Тариф 1", label: "Тариф 1", coefficient: 1.0 },
-  { value: "Тариф 2", label: "Тариф 2", coefficient: 1.2 },
-  { value: "Тариф 3", label: "Тариф 3", coefficient: 1.5 },
-];
 
-const TIME_OPTIONS = [
-  { value: "0", label: "Нет" },
-  { value: "0.5", label: "30 мин" },
-  { value: "1", label: "1 час" },
-  { value: "1.5", label: "1.5 часа" },
-  { value: "2", label: "2 часа" },
-  { value: "2.5", label: "2.5 часа" },
-  { value: "3", label: "3 часа" },
-];
 
 const SingleEvent = ({ type = "view", place }) => {
   const [mode, setMode] = useState(type);
@@ -80,6 +60,8 @@ const SingleEvent = ({ type = "view", place }) => {
     additionalTime: "",
     additionalTimeWithHost: "",
     adultsWithChildrenAmount: "",
+    additionalTimeWithLabubu: "",
+    silverTime: "",
   });
   const [isFinanceCollapsed, setIsFinanceCollapsed] = useState(false);
 
@@ -373,7 +355,18 @@ const handleStatusChange = async (newStatus) => {
     </div>
   );
 
-  const renderTimeSelectField = (label, name, value) => (
+const renderTimeSelectField = (label, name, value) => {
+  // Определяем какие опции использовать в зависимости от имени поля
+  let options;
+  if (name === "additionalTimeWithLabubu") {
+    options = TIME_OPTIONS_LABUBU;
+  } else if (name === "silverTime") {
+    options = TIME_OPTIONS_SILVER;
+  } else {
+    options = TIME_OPTIONS;
+  }
+
+  return (
     <div className="space-y-1">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       {mode !== "view" ? (
@@ -383,7 +376,7 @@ const handleStatusChange = async (newStatus) => {
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {TIME_OPTIONS.map((option) => (
+          {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -391,11 +384,12 @@ const handleStatusChange = async (newStatus) => {
         </select>
       ) : (
         <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
-          {TIME_OPTIONS.find((opt) => opt.value === value)?.label || "—"}
+          {options.find((opt) => opt.value === value)?.label || "—"}
         </div>
       )}
     </div>
   );
+};
 
   return (
     <div className="w-full p-6 bg-white rounded-lg shadow-md mt-[11vh]">
@@ -609,6 +603,18 @@ const handleStatusChange = async (newStatus) => {
                         "additionalTime",
                         true
                       ),
+                       renderField(
+                        "Ростовая кукла Лабубу",
+                        eventData.additionalTimeWithLabubu,
+                        "additionalTimeWithLabubu",
+                        true
+                      ),
+                       renderField(
+                        "Серебряная дискотека",
+                        eventData.silverTime,
+                        "silverTime",
+                        true
+                      ),
                       renderField(
                         "Взрослых с детьми",
                         eventData.adultsWithChildrenAmount,
@@ -627,6 +633,16 @@ const handleStatusChange = async (newStatus) => {
                         "Доп. ведущий (часы)",
                         "additionalTimeWithHost",
                         eventData.additionalTimeWithHost
+                      ),
+                      renderTimeSelectField(
+                        "Ростовая кукля Лабубу",
+                        "additionalTimeWithLabubu",
+                        eventData.additionalTimeWithLabubu
+                      ),
+                      renderTimeSelectField(
+                        "Серебряная дискотека",
+                        "silverTime",
+                        eventData.silverTime
                       ),
                     ]),
               ].filter(Boolean)}

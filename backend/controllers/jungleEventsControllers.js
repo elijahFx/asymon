@@ -87,6 +87,8 @@ const addEvent = async (req, res) => {
       additionalTime,
       adultsWithChildrenAmount,
       additionalTimeWithHost,
+      additionalTimeWithLabubu,
+      silverTime,
     } = req.body;
 
     // 1. Проверка пересечений в jungle_events
@@ -100,18 +102,7 @@ const addEvent = async (req, res) => {
       [date, end, start, start, end, start, end]
     );
 
-    // 2. Проверка пересечений в views (только Джуманджи)
-    const [viewConflicts] = await connection.execute(
-      `SELECT id FROM views 
-       WHERE date = ? AND location = 'Джуманджи' AND (
-         (start < ? AND end > ?) OR
-         (start < ? AND end > ?) OR
-         (start >= ? AND end <= ?)
-       )`,
-      [date, end, start, start, end, start, end]
-    );
-
-    if (jungleConflicts.length > 0 || viewConflicts.length > 0) {
+    if (jungleConflicts.length > 0) {
       return res.status(400).json({
         success: false,
         message: "На это время уже есть запись в Джуманджи",
@@ -131,17 +122,7 @@ const addEvent = async (req, res) => {
       [date, start, bufferStart, bufferEnd, end]
     );
 
-    // 4. Проверка 29-минутных буферов для views (Джуманджи)
-    const [viewBufferConflicts] = await connection.execute(
-      `SELECT id FROM views 
-       WHERE date = ? AND location = 'Джуманджи' AND (
-         (start < ? AND end > ?) OR
-         (start < ? AND end > ?)
-       )`,
-      [date, start, bufferStart, bufferEnd, end]
-    );
-
-    if (jungleBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
+    if (jungleBufferConflicts.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Требуется 30-минутный перерыв до и после мероприятия",
@@ -159,8 +140,9 @@ const addEvent = async (req, res) => {
         childrenTariff, childrenAmount, peopleAmount, wishes,
         peopleTariff, discount, prepayment,
         isBirthday, isExtr, childPlan, childAge, additionalTime, 
-        adultsWithChildrenAmount, additionalTimeWithHost
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        adultsWithChildrenAmount, additionalTimeWithHost, additionalTimeWithLabubu,
+        silverTime
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         createdAt,
@@ -189,6 +171,8 @@ const addEvent = async (req, res) => {
         additionalTime,
         adultsWithChildrenAmount,
         additionalTimeWithHost,
+        additionalTimeWithLabubu,
+        silverTime,
       ]
     );
 
@@ -254,26 +238,7 @@ const updateEvent = async (req, res) => {
         ]
       );
 
-      // 2. Проверка пересечений в views (Джуманджи)
-      const [viewConflicts] = await connection.execute(
-        `SELECT id FROM views 
-         WHERE date = ? AND location = 'Джуманджи' AND (
-           (start < ? AND end > ?) OR
-           (start < ? AND end > ?) OR
-           (start >= ? AND end <= ?)
-        )`,
-        [
-          finalDate,
-          finalEnd,
-          finalStart,
-          finalStart,
-          finalEnd,
-          finalStart,
-          finalEnd,
-        ]
-      );
-
-      if (jungleConflicts.length > 0 || viewConflicts.length > 0) {
+      if (jungleConflicts.length > 0) {
         return res.status(400).json({
           success: false,
           message: "На это время уже есть другая запись в Джуманджи",
@@ -293,16 +258,7 @@ const updateEvent = async (req, res) => {
         [finalDate, id, finalStart, bufferStart, bufferEnd, finalEnd]
       );
 
-      const [viewBufferConflicts] = await connection.execute(
-        `SELECT id FROM views 
-         WHERE date = ? AND location = 'Джуманджи' AND (
-           (start < ? AND end > ?) OR
-           (start < ? AND end > ?)
-        )`,
-        [finalDate, finalStart, bufferStart, bufferEnd, finalEnd]
-      );
-
-      if (jungleBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
+      if (jungleBufferConflicts.length > 0) {
         return res.status(400).json({
           success: false,
           message: "Требуется 30-минутный перерыв до и после мероприятия",
@@ -336,6 +292,8 @@ const updateEvent = async (req, res) => {
       "additionalTime",
       "adultsWithChildrenAmount",
       "additionalTimeWithHost",
+      "additionalTimeWithLabubu",
+      "silverTime"
     ];
 
     const setClauses = [];

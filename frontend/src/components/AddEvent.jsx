@@ -68,11 +68,15 @@ const AddEvent = () => {
     additionalTime: "",
     additionalTimeWithHost: "",
     childAge: "",
+    additionalTimeWithLabubu: "",
+    silverTime: "",
   };
 
   const [addBunker, { error, isLoading }] = useAddBunkerEventMutation();
-  const [addJungle, { jungleError, jungleIsLoading }] = useAddJungleEventMutation();
-  const [addMonopoly, { monopolyError, monopolyIsLoading }] = useAddMonopolyEventMutation();
+  const [addJungle, { jungleError, jungleIsLoading }] =
+    useAddJungleEventMutation();
+  const [addMonopoly, { monopolyError, monopolyIsLoading }] =
+    useAddMonopolyEventMutation();
 
   const [place, setPlace] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
@@ -91,7 +95,7 @@ const AddEvent = () => {
   }, [ageGroup]);
 
   useEffect(() => {
-      const costs = calculateEventCost(formData);
+    const costs = calculateEventCost(formData);
     setTotalCost(costs.totalCost);
     setFinalCost(costs.finalCost);
   }, [
@@ -104,7 +108,7 @@ const AddEvent = () => {
     formData.isPaid,
     formData.additionalTime,
     formData.additionalTimeWithHost,
-    formData.isAmeteur
+    formData.isAmeteur,
   ]);
 
   const validateForm = () => {
@@ -162,8 +166,8 @@ const AddEvent = () => {
       errorMessages.push("• Тариф для взрослых");
     }
 
-    if(error || monopolyError || jungleError) {
-      errorMessages.push("После мероприятия необходим интервал в 29 минут")
+    if (error || monopolyError || jungleError) {
+      errorMessages.push("После мероприятия необходим интервал в 29 минут");
     }
 
     setErrors(newErrors);
@@ -216,6 +220,9 @@ const AddEvent = () => {
     if (!validateForm()) {
       return;
     }
+
+    console.log(formData);
+    
 
     try {
       switch (place) {
@@ -654,6 +661,44 @@ const AddEvent = () => {
                                 additionalTimeWithHost: value,
                               }))
                             }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center py-2 group">
+                        <Clock className="text-gray-400 mr-2" size={16} />
+                        <div className="w-48 font-medium text-gray-700">
+                          Ростовая кукла Лабубу:
+                        </div>
+                        <div className="w-full">
+                          <SmartTimeInput
+                            value={formData.additionalTimeWithLabubu}
+                            onChange={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                additionalTimeWithLabubu: value,
+                              }))
+                            }
+                            label="labubu"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center py-2 group">
+                        <Clock className="text-gray-400 mr-2" size={16} />
+                        <div className="w-48 font-medium text-gray-700">
+                          Серебряная дискотека
+                        </div>
+                        <div className="w-full">
+                          <SmartTimeInput
+                            value={formData.silverTime}
+                            onChange={(value) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                silverTime: value,
+                              }))
+                            }
+                            label="silver"
                           />
                         </div>
                       </div>

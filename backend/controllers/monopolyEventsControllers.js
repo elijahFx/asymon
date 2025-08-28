@@ -86,7 +86,12 @@ const addEvent = async (req, res) => {
       additionalTime,
       adultsWithChildrenAmount,
       additionalTimeWithHost,
+      additionalTimeWithLabubu,
+      silverTime,
     } = req.body;
+
+    
+    console.log(JSON.stringify(req.body));
 
     // 1. Проверка пересечений в monopoly_events
     const [monopolyConflicts] = await connection.execute(
@@ -99,25 +104,14 @@ const addEvent = async (req, res) => {
       [date, end, start, start, end, start, end]
     );
 
-    // 2. Проверка пересечений в views (только Монополия)
-    const [viewConflicts] = await connection.execute(
-      `SELECT id FROM views 
-       WHERE date = ? AND location = 'Монополия' AND (
-         (start < ? AND end > ?) OR
-         (start < ? AND end > ?) OR
-         (start >= ? AND end <= ?)
-       )`,
-      [date, end, start, start, end, start, end]
-    );
-
-    if (monopolyConflicts.length > 0 || viewConflicts.length > 0) {
+    if (monopolyConflicts.length > 0) {
       return res.status(400).json({
         success: false,
         message: "На это время уже есть запись в Монополии",
       });
     }
 
-    // 3. Проверка 29-минутных буферов для monopoly_events
+    // 2. Проверка 29-минутных буферов для monopoly_events
     const bufferStart = adjustTime(start, -29);
     const bufferEnd = adjustTime(end, 29);
 
@@ -130,17 +124,7 @@ const addEvent = async (req, res) => {
       [date, start, bufferStart, bufferEnd, end]
     );
 
-    // 4. Проверка 29-минутных буферов для views (Монополия)
-    const [viewBufferConflicts] = await connection.execute(
-      `SELECT id FROM views 
-       WHERE date = ? AND location = 'Монополия' AND (
-         (start < ? AND end > ?) OR
-         (start < ? AND end > ?)
-       )`,
-      [date, start, bufferStart, bufferEnd, end]
-    );
-
-    if (monopolyBufferConflicts.length > 0 || viewBufferConflicts.length > 0) {
+    if (monopolyBufferConflicts.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Требуется 30-минутный перерыв до и после мероприятия",
@@ -158,8 +142,9 @@ const addEvent = async (req, res) => {
         childrenTariff, childrenAmount, peopleAmount, wishes,
         peopleTariff, discount, prepayment,
         isBirthday, isExtr, childPlan, childAge, additionalTime, 
-        adultsWithChildrenAmount, additionalTimeWithHost
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        adultsWithChildrenAmount, additionalTimeWithHost, additionalTimeWithLabubu,
+        silverTime
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         createdAt,
@@ -188,8 +173,12 @@ const addEvent = async (req, res) => {
         additionalTime,
         adultsWithChildrenAmount,
         additionalTimeWithHost,
+        additionalTimeWithLabubu,
+        silverTime,
       ]
     );
+
+    
 
     res.status(201).json({
       success: true,
@@ -253,33 +242,14 @@ const updateEvent = async (req, res) => {
         ]
       );
 
-      // 2. Проверка пересечений в views (Монополия)
-      const [viewConflicts] = await connection.execute(
-        `SELECT id FROM views 
-         WHERE date = ? AND location = 'Монополия' AND (
-           (start < ? AND end > ?) OR
-           (start < ? AND end > ?) OR
-           (start >= ? AND end <= ?)
-        )`,
-        [
-          finalDate,
-          finalEnd,
-          finalStart,
-          finalStart,
-          finalEnd,
-          finalStart,
-          finalEnd,
-        ]
-      );
-
-      if (monopolyConflicts.length > 0 || viewConflicts.length > 0) {
+      if (monopolyConflicts.length > 0) {
         return res.status(400).json({
           success: false,
           message: "На это время уже есть другая запись в Монополии",
         });
       }
 
-      // 3. Проверка буферов
+      // 2. Проверка буферов
       const bufferStart = adjustTime(finalStart, -29);
       const bufferEnd = adjustTime(finalEnd, 29);
 
@@ -292,19 +262,7 @@ const updateEvent = async (req, res) => {
         [finalDate, id, finalStart, bufferStart, bufferEnd, finalEnd]
       );
 
-      const [viewBufferConflicts] = await connection.execute(
-        `SELECT id FROM views 
-         WHERE date = ? AND location = 'Монополия' AND (
-           (start < ? AND end > ?) OR
-           (start < ? AND end > ?)
-        )`,
-        [finalDate, finalStart, bufferStart, bufferEnd, finalEnd]
-      );
-
-      if (
-        monopolyBufferConflicts.length > 0 ||
-        viewBufferConflicts.length > 0
-      ) {
+      if (monopolyBufferConflicts.length > 0) {
         return res.status(400).json({
           success: false,
           message: "Требуется 30-минутный перерыв до и после мероприятия",
@@ -338,6 +296,8 @@ const updateEvent = async (req, res) => {
       "additionalTime",
       "adultsWithChildrenAmount",
       "additionalTimeWithHost",
+      "additionalTimeWithLabubu",
+      "silverTime"
     ];
 
     const setClauses = [];

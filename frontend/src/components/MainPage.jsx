@@ -50,7 +50,6 @@ export default function MainPage({ type = "monopoly" }) {
   const [view, setView] = useState("month");
   const [namesake, setNamesake] = useState("");
   const [showBigCalendar, setShowBigCalendar] = useState(true);
-  
 
   // Определяем мутации для обновления событий
   const [updateMonopolyEvent] = useUpdateMonopolyEventMutation();
@@ -145,6 +144,8 @@ export default function MainPage({ type = "monopoly" }) {
     setNamesake(namesakes[type] || "Монополия");
   }, [type]);
 
+  console.log(currentData);
+
   useEffect(() => {
     if (currentData) {
       const formattedEvents = currentData.map((event) => ({
@@ -164,10 +165,11 @@ export default function MainPage({ type = "monopoly" }) {
           children: event.childrenAmount,
           wishes: event.wishes,
           place: event.location ? "view" : type,
-          name: event.consumerName || ""
+          name: event.consumerName || "",
+          tariff: event.peopleTariff,
         },
         isAmateur: event.isAmeteur,
-        view: view
+        view: view,
       }));
       setAllEvents(formattedEvents);
     }
@@ -309,15 +311,19 @@ export default function MainPage({ type = "monopoly" }) {
     <div className="flex flex-row flex-1 sm:overflow-scroll max-w-full md:max-w-none">
       <main className="flex-1 bg-[#F0F2F5] p-4 overflow-auto mt-[11vh] gap-5 flex flex-col w-full md:w-auto">
         <div className="bg-white rounded-lg shadow-sm p-4 w-full max-w-[90vw] md:max-w-none mx-auto">
-          <div className="flex justify-end mb-2 items-center">
-            <h2 className="text-l font-bold text-center mr-auto">{namesake}</h2>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-2 p-2 gap-4 min-h-[50px]">
+            {/* Левая часть - заголовок */}
+            <h2 className="text-l font-bold text-center truncate">
+              {namesake}
+            </h2>
 
-            <div className="text-l font-bold text-center mr-56 flex">
+            {/* Центр - меню */}
+            <div className="flex justify-center items-center space-x-2 mx-auto">
               {otherMenuItems.map((item, index) => (
                 <Link
                   to={item.link}
                   key={index}
-                  className="mr-2 text-gray-700 hover:text-gray-900"
+                  className="text-gray-700 hover:text-gray-900 p-1 flex-shrink-0"
                   title={item.label}
                 >
                   {item.icon}
@@ -325,29 +331,34 @@ export default function MainPage({ type = "monopoly" }) {
               ))}
             </div>
 
-            <Link
-              to={`/add?type=${type}`}
-              className="text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-full text-l shadow-md transition mr-2"
-              title="Добавить событие"
-            >
-              +
-            </Link>
-            <Link to="/views/add">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition shadow cursor-pointer">
-                <Eye size={18} /> Просмотр
-              </button>
-            </Link>
+            {/* Правая часть - кнопки */}
+            <div className="flex items-center justify-end gap-2 flex-shrink-0">
+              <Link
+                to={`/add?type=${type}`}
+                className="text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-full text-l shadow-md transition flex-shrink-0"
+                title="Добавить событие"
+              >
+                +
+              </Link>
 
-            <Link to="/waitings/add">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition shadow cursor-pointer ml-1.5 mr-1.5">
-                <Hourglass size={18} /> Лист ожидания
-              </button>
-            </Link>
-            <CalendarSync
-              onClick={toggleCalendarView}
-              className="cursor-pointer"
-              color="#191A4B"
-            />
+              <Link to="/views/add">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition shadow cursor-pointer flex-shrink-0">
+                  <Eye size={18} /> Просмотр
+                </button>
+              </Link>
+
+              <Link to="/waitings/add">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition shadow cursor-pointer flex-shrink-0">
+                  <Hourglass size={18} /> Лист ожидания
+                </button>
+              </Link>
+
+              <CalendarSync
+                onClick={toggleCalendarView}
+                className="cursor-pointer flex-shrink-0"
+                color="#191A4B"
+              />
+            </div>
           </div>
 
           {isLoading ? (
@@ -373,8 +384,7 @@ export default function MainPage({ type = "monopoly" }) {
                   date={date}
                   view={view}
                   onView={(view2) => {
-                   setView(view2)
-                    
+                    setView(view2);
                   }}
                   onNavigate={onChangeDate}
                   defaultView="month"
