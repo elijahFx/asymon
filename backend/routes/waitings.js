@@ -6,10 +6,13 @@ const {
   addWaiting,
   deleteWaiting,
   updateWaiting,
+  getWaitingsByDate,
 } = require("../controllers/waitingsControllers.js");
 const requireAuth = require("../requireAuth");
 
 const router = express.Router();
+
+router.post("/date", requireAuth, getWaitingsByDate);
 
 router.get("/:id", requireAuth, getWaitingById);
 

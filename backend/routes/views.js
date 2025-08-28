@@ -9,7 +9,13 @@ const {
 } = require("../controllers/viewsControllers.js");
 const requireAuth = require("../requireAuth");
 
+function funFunction() {
+  console.log(")");
+}
+
 const router = express.Router();
+
+router.post("/date", requireAuth, funFunction);
 
 router.get("/:id", requireAuth, getViewById);
 

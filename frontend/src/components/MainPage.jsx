@@ -38,6 +38,7 @@ import {
   Hourglass,
 } from "lucide-react";
 import EventTable from "./EventTable";
+import WaitingList from "./WaitingList/WaitingList";
 
 const menuSize = 37;
 
@@ -429,6 +430,7 @@ export default function MainPage({ type = "monopoly" }) {
             </div>
           )}
         </div>
+        <WaitingList selectedDate={"2025"}/>
         <Legend type={type} />
       </main>
     </div>

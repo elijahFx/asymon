@@ -26,6 +26,15 @@ export const waitingsApi = createApi({
       query: (id) => `/${id}`,
       providesTags: ["Waitings"],
     }),
+    // Добавляем новый endpoint для поиска по дате
+    getWaitingsByDate: builder.query({
+      query: (date) => ({
+        url: "/date",
+        method: "POST",
+        body: { date },
+      }),
+      providesTags: ["Waitings"],
+    }),
     addWaiting: builder.mutation({
       query: (newWaiting) => ({
         url: "/",
@@ -55,6 +64,7 @@ export const waitingsApi = createApi({
 export const {
   useGetAllWaitingsQuery,
   useGetWaitingByIdQuery,
+  useGetWaitingsByDateQuery, // Экспортируем новый хук
   useAddWaitingMutation,
   useUpdateWaitingMutation,
   useDeleteWaitingMutation,

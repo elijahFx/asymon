@@ -49,6 +49,15 @@ export const viewsApi = createApi({
       }),
       invalidatesTags: ["Views"],
     }),
+
+    getViewsByDate: builder.query({
+      query: (date) => ({
+        url: "/date",
+        method: "POST",
+        body: { date },
+      }),
+      providesTags: ["Views"],
+    }),
   }),
 });
 
@@ -58,4 +67,5 @@ export const {
   useAddViewMutation,
   useUpdateViewMutation,
   useDeleteViewMutation,
+  useGetViewsByDateQuery
 } = viewsApi;

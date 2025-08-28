@@ -23,20 +23,8 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SmartTimeInput from "./SmallStuff/SmartTimeInput.jsx";
 import { calculateEventCost } from "../utils/eventCalculations.js";
-
-const MESSENGERS = [
-  { value: "Viber", label: "Viber" },
-  { value: "Telegram", label: "Telegram" },
-  { value: "WhatsApp", label: "WhatsApp" },
-  { value: "Instagram", label: "Instagram" },
-  { value: "ВКонтакте", label: "ВКонтакте" },
-];
-
-const ADULT_TARIFFS = [
-  { value: "Тариф 1", label: "Тариф 1" },
-  { value: "Тариф 2", label: "Тариф 2" },
-  { value: "Тариф 3", label: "Тариф 3" },
-];
+import { ADULT_TARIFFS, MESSENGERS } from "../utils/timeConfig.js";
+import { validatePhoneNumber } from "../utils/formValidation.js";
 
 const AddEvent = () => {
   const user_id = useSelector((state) => state.auth.id);
@@ -170,6 +158,14 @@ const AddEvent = () => {
       errorMessages.push("После мероприятия необходим интервал в 29 минут");
     }
 
+    if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber)) {
+      setErrors((prev) => ({
+        ...prev,
+        phoneNumber: "Неверный формат телефона",
+      }));
+      return; // Не сохраняем если телефон невалидный
+    }
+
     setErrors(newErrors);
 
     if (errorMessages.length > 0) {
@@ -222,7 +218,6 @@ const AddEvent = () => {
     }
 
     console.log(formData);
-    
 
     try {
       switch (place) {

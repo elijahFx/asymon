@@ -4,14 +4,15 @@ import { toast } from "react-toastify";
 import { useAddWaitingMutation } from "../../apis/waitingsApi";
 import { useAddViewMutation } from "../../apis/viewsApi";
 import { useSelector } from "react-redux";
+import { validatePhoneNumber } from "../../utils/formValidation";
 
 const AddWaitingList = ({ place }) => {
   const user_id = useSelector((state) => state.auth.id);
 
   const initialState = {
     date: "",
-    startTime: "19:00", // Начальное время начала
-    endTime: "20:00", // Начальное время окончания
+    startTime: "19:00",
+    endTime: "20:00",
     phoneNumber: "",
     consumerName: "",
     note: "",
@@ -27,15 +28,35 @@ const AddWaitingList = ({ place }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Валидация телефона в реальном времени
+    if (name === 'phoneNumber') {
+      if (value && !validatePhoneNumber(value)) {
+        setErrors(prev => ({ ...prev, phoneNumber: 'Формат: +79001234567' }));
+      } else {
+        setErrors(prev => ({ ...prev, phoneNumber: null }));
+      }
+    } else if (errors[name]) {
+      // Убираем ошибку для других полей при изменении
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
   };
 
   const validateForm = () => {
     const newErrors = {};
     if(error) newErrors.message = "На это время уже есть мероприятие, либо необходим 29-минутный интервал";
     if (!formData.date) newErrors.date = "Укажите дату";
-    if (!formData.phoneNumber) newErrors.phoneNumber = "Укажите телефон";
+    
+    // Валидация телефона
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = "Укажите телефон";
+    } else if (!validatePhoneNumber(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Неверный формат телефона";
+    }
+    
     if (!formData.consumerName) newErrors.consumerName = "Укажите имя";
     if (!formData.location) newErrors.location = "Укажите место";
+    
     if (place === "views") {
       if (!formData.startTime) newErrors.startTime = "Укажите время начала";
       if (!formData.endTime) newErrors.endTime = "Укажите время окончания";
@@ -46,8 +67,8 @@ const AddWaitingList = ({ place }) => {
       ) {
         newErrors.endTime = "Время окончания должно быть позже начала";
       }
-
     }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -55,10 +76,10 @@ const AddWaitingList = ({ place }) => {
   const handleSubmit = async () => {
     if (!validateForm()) {
       if(errors.message) {
-        toast.error(errors.message)
-        return
+        toast.error(errors.message);
+        return;
       }
-      toast.error("Пожалуйста, заполните обязательные поля");
+      toast.error("Пожалуйста, заполните обязательные поля правильно");
       return;
     }
 
@@ -68,8 +89,8 @@ const AddWaitingList = ({ place }) => {
       name: formData.consumerName,
       location: formData.location,
       ...(place === "views" && {
-        start: formData.startTime, // Отдельное поле для времени начала
-        end: formData.endTime, // Отдельное поле для времени окончания
+        start: formData.startTime,
+        end: formData.endTime,
         note: formData.note,
       }),
       place,
@@ -85,6 +106,7 @@ const AddWaitingList = ({ place }) => {
         toast.success("Просмотр успешно добавлен");
       }
       setFormData(initialState);
+      setErrors({});
     } catch (error) {
       toast.error("Ошибка при сохранении");
       console.error(error);
@@ -115,6 +137,9 @@ const AddWaitingList = ({ place }) => {
             <option value="Джуманджи">Джуманджи</option>
             <option value="Бункер">Бункер</option>
           </select>
+          {errors.location && (
+            <p className="text-red-500 text-xs mt-1">{errors.location}</p>
+          )}
         </div>
 
         <div>
@@ -128,6 +153,9 @@ const AddWaitingList = ({ place }) => {
               errors.date ? "border-red-500" : "border-gray-300"
             } rounded`}
           />
+          {errors.date && (
+            <p className="text-red-500 text-xs mt-1">{errors.date}</p>
+          )}
         </div>
 
         {place === "views" && (
@@ -165,7 +193,6 @@ const AddWaitingList = ({ place }) => {
           </div>
         )}
 
-        {/* Остальные поля формы остаются без изменений */}
         <div>
           <label className="block text-sm font-medium">Телефон *</label>
           <input
@@ -173,10 +200,14 @@ const AddWaitingList = ({ place }) => {
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleChange}
+            placeholder="+79001234567"
             className={`w-full px-3 py-2 border ${
               errors.phoneNumber ? "border-red-500" : "border-gray-300"
             } rounded`}
           />
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+          )}
         </div>
 
         <div>
@@ -190,6 +221,9 @@ const AddWaitingList = ({ place }) => {
               errors.consumerName ? "border-red-500" : "border-gray-300"
             } rounded`}
           />
+          {errors.consumerName && (
+            <p className="text-red-500 text-xs mt-1">{errors.consumerName}</p>
+          )}
         </div>
 
         {place === "views" && (
@@ -213,7 +247,10 @@ const AddWaitingList = ({ place }) => {
             <Check size={16} className="mr-2" /> Сохранить
           </button>
           <button
-            onClick={() => setFormData(initialState)}
+            onClick={() => {
+              setFormData(initialState);
+              setErrors({});
+            }}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded flex items-center"
           >
             <X size={16} className="mr-2" /> Очистить

@@ -45,6 +45,33 @@ const getWaitingById = async (req, res) => {
   }
 };
 
+// В вашем server code (waitings controller)
+const getWaitingsByDate = async (req, res) => {
+  let connection;
+  try {
+    connection = await createDbConnection();
+    const { date } = req.body;
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    const [rows] = await connection.execute(
+      `SELECT * FROM waitings WHERE date = ? ORDER BY number DESC`,
+      [date]
+    );
+
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching waitings by date:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    if (connection) await connection.end();
+  }
+};
+
+
+
 // Создание новой записи ожидания
 const addWaiting = async (req, res) => {
   let connection;
@@ -185,4 +212,5 @@ module.exports = {
   addWaiting,
   updateWaiting,
   deleteWaiting,
+  getWaitingsByDate
 };
