@@ -141,9 +141,7 @@ const CalendarEventComponent = ({ event, view }) => {
               <div className="text-sm font-medium">
                 {formatTime(event.start)}-{formatTime(event.end)}
               </div>
-              <div className="text-xs bg-white/20 px-1 mr-5 rounded">
-                {isAmateur}
-              </div>
+              
             </div>
             <div className="text-xs mt-1 font-medium">
               {event.resource.name}

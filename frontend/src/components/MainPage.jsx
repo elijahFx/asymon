@@ -38,19 +38,20 @@ import {
   Hourglass,
 } from "lucide-react";
 import EventTable from "./EventTable";
-import WaitingList from "./WaitingList/WaitingList";
+import SmallWaitingList from "./WaitingList/SmallWaitingList";
+import { extractWaitings, styles } from "../utils/calendarConfig";
 
 const menuSize = 37;
 
 export default function MainPage({ type = "monopoly" }) {
   const DnDCalendar = withDragAndDrop(Calendar);
-  const navigate = useNavigate();
   const [today, setToday] = useState(getTodayDate());
   const [allEvents, setAllEvents] = useState([]);
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState("month");
   const [namesake, setNamesake] = useState("");
   const [showBigCalendar, setShowBigCalendar] = useState(true);
+  const [waitings, setWaitings] = useState([]);
 
   // Определяем мутации для обновления событий
   const [updateMonopolyEvent] = useUpdateMonopolyEventMutation();
@@ -145,7 +146,13 @@ export default function MainPage({ type = "monopoly" }) {
     setNamesake(namesakes[type] || "Монополия");
   }, [type]);
 
-  console.log(currentData);
+  useEffect(() => {
+    // Извлекаем waitings из данных
+    if (currentData) {
+      const extractedWaitings = extractWaitings(currentData);
+      setWaitings(extractedWaitings);
+    }
+  }, [currentData]);
 
   useEffect(() => {
     if (currentData) {
@@ -184,7 +191,12 @@ export default function MainPage({ type = "monopoly" }) {
     setToday(`${day}.${month}.${year}`);
   };
 
-  const formatTime = (date) => date.toTimeString().slice(0, 5);
+  const formatTime = (date) => {
+    if (!date) return "";
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
 
   const formatDateString = (date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
@@ -374,7 +386,31 @@ export default function MainPage({ type = "monopoly" }) {
                 <DnDCalendar
                   min={new Date(0, 0, 0, 0, 0)}
                   max={new Date(0, 0, 0, 23, 59)}
-                  formats={calendarFormats}
+                  formats={{
+                    ...calendarFormats,
+                    eventTimeRangeFormat: (
+                      { start, end },
+                      culture,
+                      localizer
+                    ) =>
+                      `${localizer.format(
+                        start,
+                        "HH:mm",
+                        culture
+                      )} - ${localizer.format(end, "HH:mm", culture)}`,
+                    agendaTimeFormat: (date, culture, localizer) =>
+                      localizer.format(date, "HH:mm", culture),
+                    agendaTimeRangeFormat: (
+                      { start, end },
+                      culture,
+                      localizer
+                    ) =>
+                      `${localizer.format(
+                        start,
+                        "HH:mm",
+                        culture
+                      )} - ${localizer.format(end, "HH:mm", culture)}`,
+                  }}
                   localizer={localizer}
                   events={allEvents}
                   startAccessor="start"
@@ -430,73 +466,12 @@ export default function MainPage({ type = "monopoly" }) {
             </div>
           )}
         </div>
-        <WaitingList selectedDate={"2025"}/>
+        <SmallWaitingList waitings={waitings} />
         <Legend type={type} />
       </main>
     </div>
   );
 }
-
-const styles = `
-  /* Общие стили для дней с событиями */
-  .day-with-events {
-    background-color: #191A4B !important;
-    color: white !important;
-    position: relative;
-  }
-  .day-with-events:hover {
-    background-color: #2A2B7C !important;
-  }
-  .day-with-events abbr {
-    position: relative;
-    z-index: 1;
-  }
-  .react-calendar__tile {
-    position: relative;
-    overflow: visible;
-  }
-
-  /* Стили для react-big-calendar */
-  .rbc-month-view {
-    background-color: transparent;
-  }
-  .rbc-month-row {
-    background-color: transparent;
-  }
-  .rbc-day-bg + .rbc-day-bg {
-    background-color: transparent;
-  }
-  .rbc-off-range-bg {
-    background-color: transparent;
-  }
-  .rbc-date-cell {
-    position: relative;
-    height: 100%;
-  }
-  .rbc-date-cell > div {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 2px;
-  }
-  .rbc-date-cell .time-slot {
-    font-size: 10px;
-    margin: 1px 0;
-    padding: 1px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 2px;
-  }
-  .rbc-event,
-  .rbc-background-event {
-  padding: 0px; !important;
-  border: none; !important;
-  }
-  .rbc-event-label {
-  display: none; !important
-  }
-`;
 
 // Вставляем стили в документ
 const styleSheet = document.createElement("style");

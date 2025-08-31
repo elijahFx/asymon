@@ -43,6 +43,18 @@ const SERVICE_RATES = {
   host: 70       // ведущий за час
 };
 
+// Новые константы для дополнительных услуг
+const ADDITIONAL_SERVICES = {
+  labubu: {
+    rate: 150,    // 150 рублей за каждые 15 минут
+    interval: 15  // интервал в минутах
+  },
+  silver: {
+    rate: 100,    // 100 рублей за каждые 30 минут
+    interval: 30  // интервал в минутах
+  }
+};
+
 /**
  * Расчет стоимости мероприятия
  * @param {Object} eventData - Данные мероприятия
@@ -84,8 +96,20 @@ export const calculateEventCost = (eventData) => {
     (additionalTime * SERVICE_RATES.rental) + 
     (additionalTimeWithHost * SERVICE_RATES.host);
 
+  // Расчет стоимости дополнительных услуг с Лабубу и Серебряной дискотекой
+  const additionalTimeWithLabubu = parseInt(eventData.additionalTimeWithLabubu) || 0; // время в минутах
+  const silverTime = parseInt(eventData.silverTime) || 0; // время в минутах
+  
+  // Расчет стоимости за Лабубу (150 руб за каждые 15 минут)
+  const labubuCost = Math.ceil(additionalTimeWithLabubu / ADDITIONAL_SERVICES.labubu.interval) * ADDITIONAL_SERVICES.labubu.rate;
+  
+  // Расчет стоимости за Серебряную дискотеку (100 руб за каждые 30 минут)
+  const silverCost = Math.ceil(silverTime / ADDITIONAL_SERVICES.silver.interval) * ADDITIONAL_SERVICES.silver.rate;
+
+  const totalAdditionalServicesCost = additionalServicesCost + labubuCost + silverCost;
+
   // Итоговые расчеты
-  const totalCost = baseCost + additionalCost + additionalServicesCost;
+  const totalCost = baseCost + additionalCost + totalAdditionalServicesCost;
   const discountAmount = totalCost * (parseFloat(eventData.discount || 0) / 100);
   const finalCost = totalCost - discountAmount;
   const prepaymentAmount = parseFloat(eventData.prepayment || 0);
@@ -99,16 +123,61 @@ export const calculateEventCost = (eventData) => {
     remainingAmount,
     baseCost,
     additionalCost,
-    additionalServicesCost
+    additionalServicesCost: totalAdditionalServicesCost,
+    labubuCost,
+    silverCost,
+    details: {
+      labubu: {
+        time: additionalTimeWithLabubu,
+        cost: labubuCost
+      },
+      silver: {
+        time: silverTime,
+        cost: silverCost
+      }
+    }
   };
 };
 
 /**
  * Получение информации о тарифах
- * @returns {Object} Объект с тарифами
+ * @returns {Object} Объект с тарифам
  */
 export const getTariffsInfo = () => ({
   adultTariffs: ADULT_TARIFFS,
   childrenTariffs: CHILDREN_TARIFFS,
-  serviceRates: SERVICE_RATES
+  serviceRates: SERVICE_RATES,
+  additionalServices: ADDITIONAL_SERVICES
 });
+
+/**
+ * Вспомогательная функция для форматирования времени из минут
+ * @param {number} minutes - Количество минут
+ * @returns {string} Отформатированное время
+ */
+export const formatMinutesForDisplay = (minutes) => {
+  if (!minutes || minutes === 0) return '0 мин';
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (hours === 0) return `${remainingMinutes} мин`;
+  if (remainingMinutes === 0) return `${hours} ч`;
+  return `${hours} ч ${remainingMinutes} мин`;
+};
+
+/**
+ * Вспомогательная функция для расчета стоимости конкретной услуги
+ * @param {number} minutes - Количество минут
+ * @param {string} serviceType - Тип услуги ('labubu' или 'silver')
+ * @returns {number} Стоимость услуги
+ */
+export const calculateServiceCost = (minutes, serviceType) => {
+  if (!minutes || minutes === 0) return 0;
+  
+  const service = ADDITIONAL_SERVICES[serviceType];
+  if (!service) return 0;
+  
+  const intervals = Math.ceil(minutes / service.interval);
+  return intervals * service.rate;
+};

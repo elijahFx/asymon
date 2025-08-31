@@ -55,3 +55,77 @@ export const weekendBackgroundColors = {
   jungle: "rgba(16, 185, 129, 0.2)", // более яркий зеленый
   bunker: "rgba(245, 158, 11, 0.2)", // более яркий желтый
 };
+
+export const extractWaitings = (events) => {
+
+  console.log(events);
+  
+
+  if (!events || !Array.isArray(events)) return [];
+  
+  return events.filter(event => {
+    // Если у объекта нет start и end, то это waiting
+    return !event.start && !event.end;
+  });
+};
+
+export const styles = `
+  /* Общие стили для дней с событиями */
+  .day-with-events {
+    background-color: #191A4B !important;
+    color: white !important;
+    position: relative;
+  }
+  .day-with-events:hover {
+    background-color: #2A2B7C !important;
+  }
+  .day-with-events abbr {
+    position: relative;
+    z-index: 1;
+  }
+  .react-calendar__tile {
+    position: relative;
+    overflow: visible;
+  }
+
+  /* Стили для react-big-calendar */
+  .rbc-month-view {
+    background-color: transparent;
+  }
+  .rbc-month-row {
+    background-color: transparent;
+  }
+  .rbc-day-bg + .rbc-day-bg {
+    background-color: transparent;
+  }
+  .rbc-off-range-bg {
+    background-color: transparent;
+  }
+  .rbc-date-cell {
+    position: relative;
+    height: 100%;
+  }
+  .rbc-date-cell > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 2px;
+  }
+  .rbc-date-cell .time-slot {
+    font-size: 10px;
+    margin: 1px 0;
+    padding: 1px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+  .rbc-event,
+  .rbc-background-event {
+  padding: 0px; !important;
+  border: none; !important;
+  }
+  .rbc-event-label {
+  display: none; !important
+  }
+`;

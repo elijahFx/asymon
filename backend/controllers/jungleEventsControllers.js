@@ -17,8 +17,12 @@ const getAllEvents = async (req, res) => {
       `SELECT * FROM views WHERE location = 'Джуманджи' ORDER BY createdAt DESC`
     );
 
+    const [waitings] = await connection.execute(
+      `SELECT * FROM waitings WHERE location = 'Джуманджи' ORDER BY createdAt DESC`
+    );
+
     // Объединяем результаты на уровне JavaScript
-    const combinedResults = [...jungleEvents, ...views].sort(
+    const combinedResults = [...jungleEvents, ...views, ...waitings].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
 
@@ -293,7 +297,7 @@ const updateEvent = async (req, res) => {
       "adultsWithChildrenAmount",
       "additionalTimeWithHost",
       "additionalTimeWithLabubu",
-      "silverTime"
+      "silverTime",
     ];
 
     const setClauses = [];

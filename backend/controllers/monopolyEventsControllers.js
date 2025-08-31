@@ -17,8 +17,12 @@ const getAllEvents = async (req, res) => {
       `SELECT * FROM views WHERE location = 'Монополия' ORDER BY createdAt DESC`
     );
 
+     const [waitings] = await connection.execute(
+      `SELECT * FROM waitings WHERE location = 'Монополия' ORDER BY createdAt DESC`
+    );
+
     // Объединяем результаты на уровне JavaScript
-    const combinedResults = [...monopolyEvents, ...views].sort(
+    const combinedResults = [...monopolyEvents, ...views, ...waitings].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
 
