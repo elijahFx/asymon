@@ -7,10 +7,10 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const STATUS_COLORS = {
-  "Новое": "bg-red-500",
+  Новое: "bg-red-500",
   "Ждем предоплату": "bg-orange-400",
   "Предоплата внесена": "bg-[#3174AD]",
-  "Просмотр": "gray",
+  Просмотр: "gray",
 };
 
 const CalendarEventComponent = ({ event, view }) => {
@@ -141,14 +141,23 @@ const CalendarEventComponent = ({ event, view }) => {
               <div className="text-sm font-medium">
                 {formatTime(event.start)}-{formatTime(event.end)}
               </div>
-              
+              {event.resource?.place !== "view" && (
+                <div className="text-xs bg-white/20 px-1 mr-5 rounded">
+                  {isAmateur}
+                </div>
+              )}
             </div>
             <div className="text-xs mt-1 font-medium">
               {event.resource.name}
             </div>
             <div className="text-xs mt-1">{event.resource.phone}</div>
             <div className="text-xs mt-1">{event.resource.people} человек</div>
-            <div className="text-xs mt-1">Тариф: {event.resource.tariff ? event.resource.tariff : "тариф не определен"}</div>
+            <div className="text-xs mt-1">
+              Тариф:{" "}
+              {event.resource.tariff
+                ? event.resource.tariff
+                : "тариф не определен"}
+            </div>
           </>
         );
       default:

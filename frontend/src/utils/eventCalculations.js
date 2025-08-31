@@ -2,40 +2,38 @@
 const ADULT_TARIFFS = {
   "Тариф 1": { 
     base: 380, 
-    additional: 25,
-    includedPeople: 10 
+    includedPeople: 13 
   },
   "Тариф 2": { 
     base: 530, 
-    additional: 30,
-    includedPeople: 10 
+    includedPeople: 13 
   },
   "Тариф 3": { 
     base: 850, 
-    additional: 40,
-    includedPeople: 10 
+    includedPeople: 13 
   }
 };
 
 const CHILDREN_TARIFFS = {
   "Старт": { 
     base: 400, 
-    additional: 25,
-    includedChildren: 10,
-    includedAdults: 3 
+    includedPeople: 13 
   },
   "Стандарт": { 
     base: 580, 
-    additional: 30,
-    includedChildren: 10,
-    includedAdults: 5 
+    includedPeople: 13 
   },
   "ВИП": { 
     base: 760, 
-    additional: 40,
-    includedChildren: 10,
-    includedAdults: 7 
+    includedPeople: 13 
   }
+};
+
+// Доплаты за превышение количества людей
+const ADDITIONAL_PEOPLE_RATES = {
+  rate1: 25,  // за каждого человека свыше 13 до 15
+  rate2: 30,  // за каждого человека от 15 до 17
+  rate3: 40   // за каждого человека после 17
 };
 
 const SERVICE_RATES = {
@@ -61,31 +59,38 @@ const ADDITIONAL_SERVICES = {
  * @returns {Object} Результаты расчета
  */
 export const calculateEventCost = (eventData) => {
+  console.log(eventData);
+
   let baseCost = 0;
   let additionalCost = 0;
   
-  // Расчет основной стоимости
+  // Получаем базовую стоимость в зависимости от типа мероприятия и тарифа
   if (!eventData.isAmeteur) {
     // Взрослое мероприятие
     const tariff = ADULT_TARIFFS[eventData.peopleTariff] || {};
-    const peopleCount = parseInt(eventData.peopleAmount) || 0;
-    
     baseCost = tariff.base || 0;
-    additionalCost = Math.max(0, peopleCount - tariff.includedPeople) * (tariff.additional || 0);
   } else {
     // Детское мероприятие
     const tariff = CHILDREN_TARIFFS[eventData.peopleTariff] || {};
-    const childrenCount = parseInt(eventData.childrenAmount) || 0;
-    const adultsCount = parseInt(eventData.adultsWithChildrenAmount) || 0;
-    
     baseCost = tariff.base || 0;
+  }
+
+  // Расчет доплаты за количество людей
+  const peopleCount = parseInt(eventData.peopleAmount) || 0;
+  
+  if (peopleCount > 13) {
+    const additionalPeople = peopleCount - 13;
     
-    // Проверяем, превышает ли количество детей и взрослых включенные значения
-    const additionalChildren = Math.max(0, childrenCount - tariff.includedChildren);
-    const additionalAdults = Math.max(0, adultsCount - tariff.includedAdults);
-    
-    // Берем максимальное значение из превышений (доплата только за одного человека - ребенка или взрослого)
-    additionalCost = Math.max(additionalChildren, additionalAdults) * (tariff.additional || 0);
+    if (additionalPeople <= 2) { // 14-15 человек
+      additionalCost = additionalPeople * ADDITIONAL_PEOPLE_RATES.rate1;
+    } else if (additionalPeople <= 4) { // 16-17 человек
+      additionalCost = 2 * ADDITIONAL_PEOPLE_RATES.rate1 + // за 14-15 человек
+                      (additionalPeople - 2) * ADDITIONAL_PEOPLE_RATES.rate2;
+    } else { // 18+ человек
+      additionalCost = 2 * ADDITIONAL_PEOPLE_RATES.rate1 + // за 14-15 человек
+                      2 * ADDITIONAL_PEOPLE_RATES.rate2 + // за 16-17 человек
+                      (additionalPeople - 4) * ADDITIONAL_PEOPLE_RATES.rate3;
+    }
   }
 
   // Расчет дополнительных услуг
@@ -134,6 +139,10 @@ export const calculateEventCost = (eventData) => {
       silver: {
         time: silverTime,
         cost: silverCost
+      },
+      people: {
+        count: peopleCount,
+        additional: additionalCost
       }
     }
   };
@@ -141,14 +150,37 @@ export const calculateEventCost = (eventData) => {
 
 /**
  * Получение информации о тарифах
- * @returns {Object} Объект с тарифам
+ * @returns {Object} Объект с тарифами
  */
 export const getTariffsInfo = () => ({
   adultTariffs: ADULT_TARIFFS,
   childrenTariffs: CHILDREN_TARIFFS,
+  additionalPeopleRates: ADDITIONAL_PEOPLE_RATES,
   serviceRates: SERVICE_RATES,
   additionalServices: ADDITIONAL_SERVICES
 });
+
+/**
+ * Вспомогательная функция для расчета доплаты за людей
+ * @param {number} peopleCount - Общее количество людей
+ * @returns {number} Доплата
+ */
+export const calculateAdditionalPeopleCost = (peopleCount) => {
+  if (peopleCount <= 13) return 0;
+  
+  const additionalPeople = peopleCount - 13;
+  
+  if (additionalPeople <= 2) { // 14-15 человек
+    return additionalPeople * ADDITIONAL_PEOPLE_RATES.rate1;
+  } else if (additionalPeople <= 4) { // 16-17 человек
+    return 2 * ADDITIONAL_PEOPLE_RATES.rate1 + 
+           (additionalPeople - 2) * ADDITIONAL_PEOPLE_RATES.rate2;
+  } else { // 18+ человек
+    return 2 * ADDITIONAL_PEOPLE_RATES.rate1 + 
+           2 * ADDITIONAL_PEOPLE_RATES.rate2 + 
+           (additionalPeople - 4) * ADDITIONAL_PEOPLE_RATES.rate3;
+  }
+};
 
 /**
  * Вспомогательная функция для форматирования времени из минут

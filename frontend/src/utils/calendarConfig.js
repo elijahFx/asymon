@@ -122,10 +122,43 @@ export const styles = `
   }
   .rbc-event,
   .rbc-background-event {
-  padding: 0px; !important;
-  border: none; !important;
+    padding: 0px !important;
+    border: none !important;
   }
   .rbc-event-label {
-  display: none; !important
+    display: none !important;
+  }
+
+  /* УВЕЛИЧИВАЕМ ЯЧЕЙКИ В НЕДЕЛЬНОМ ВИДЕ */
+  .rbc-time-view {
+    min-height: 800px; /* Общая высота недельного вида */
+  }
+  .rbc-time-header {
+    min-height: 80px; /* Высота заголовка */
+  }
+  .rbc-time-header-cell {
+    height: 80px !important;
+  }
+  .rbc-time-content {
+    min-height: 720px; /* Высота контентной части */
+  }
+  .rbc-time-column {
+    min-width: 60px; /* Ширина колонки времени */
+  }
+
+  .rbc-time-slot {
+    height: 60px !important; /* Высота каждого временного слота */
+    min-height: 60px;
+  }
+  .rbc-timeslot-group {
+    min-height: 60px;
+  }
+  .rbc-allday-cell {
+    height: 50px !important; /* Высота ячейки "Весь день" */
+  }
+
+  /* Увеличиваем события в недельном виде */
+  .rbc-time-view .rbc-event {
+    font-size: 12px;
   }
 `;
