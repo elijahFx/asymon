@@ -27,9 +27,13 @@ import { STATUS_COLORS } from "../../utils/types";
 import StatusCheckboxes from "../SmallStuff/StatusCheckboxes";
 import { calculateEventCost } from "../../utils/eventCalculations";
 
-import { TIME_OPTIONS, TIME_OPTIONS_LABUBU, TIME_OPTIONS_SILVER, MESSENGERS, ADULT_TARIFFS } from "../../utils/timeConfig";
-
-
+import {
+  TIME_OPTIONS,
+  TIME_OPTIONS_LABUBU,
+  TIME_OPTIONS_SILVER,
+  MESSENGERS,
+  ADULT_TARIFFS,
+} from "../../utils/timeConfig";
 
 const SingleEvent = ({ type = "view", place }) => {
   const [mode, setMode] = useState(type);
@@ -60,8 +64,8 @@ const SingleEvent = ({ type = "view", place }) => {
     additionalTime: "",
     additionalTimeWithHost: "",
     adultsWithChildrenAmount: "",
-    additionalTimeWithLabubu: "",
-    silverTime: "",
+    additionalTimeWithLabubu: "0",
+    silverTime: "0",
   });
   const [isFinanceCollapsed, setIsFinanceCollapsed] = useState(false);
 
@@ -111,23 +115,22 @@ const SingleEvent = ({ type = "view", place }) => {
     }
   }, [data]);
 
-const handleStatusChange = async (newStatus) => {
-  try {
-    // Обновляем локальное состояние
-    setEventData(prev => ({ ...prev, status: newStatus }));
-    
-    // Отправляем PATCH запрос на сервер
-    await updateEvent({ 
-      id, 
-      status: newStatus
-    }).unwrap();
-    
-  } catch (err) {
-    console.error("Failed to update status:", err);
-    // В случае ошибки возвращаем предыдущее состояние
-    setEventData(prev => ({ ...prev }));
-  }
-};
+  const handleStatusChange = async (newStatus) => {
+    try {
+      // Обновляем локальное состояние
+      setEventData((prev) => ({ ...prev, status: newStatus }));
+
+      // Отправляем PATCH запрос на сервер
+      await updateEvent({
+        id,
+        status: newStatus,
+      }).unwrap();
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      // В случае ошибки возвращаем предыдущее состояние
+      setEventData((prev) => ({ ...prev }));
+    }
+  };
 
   const calculateFinancials = () => {
     // Находим выбранный тариф и его коэффициент
@@ -230,7 +233,7 @@ const handleStatusChange = async (newStatus) => {
         <input
           type={type}
           name={name}
-          value={value || ""}
+          value={value || "0"}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -355,41 +358,43 @@ const handleStatusChange = async (newStatus) => {
     </div>
   );
 
-const renderTimeSelectField = (label, name, value) => {
-  // Определяем какие опции использовать в зависимости от имени поля
-  let options;
-  if (name === "additionalTimeWithLabubu") {
-    options = TIME_OPTIONS_LABUBU;
-  } else if (name === "silverTime") {
-    options = TIME_OPTIONS_SILVER;
-  } else {
-    options = TIME_OPTIONS;
-  }
+  const renderTimeSelectField = (label, name, value) => {
+    // Определяем какие опции использовать в зависимости от имени поля
+    let options;
+    if (name === "additionalTimeWithLabubu") {
+      options = TIME_OPTIONS_LABUBU;
+    } else if (name === "silverTime") {
+      options = TIME_OPTIONS_SILVER;
+    } else {
+      options = TIME_OPTIONS;
+    }
 
-  return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      {mode !== "view" ? (
-        <select
-          name={name}
-          value={value || "0"}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
-          {options.find((opt) => opt.value === value)?.label || "—"}
-        </div>
-      )}
-    </div>
-  );
-};
+    return (
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
+        {mode !== "view" ? (
+          <select
+            name={name}
+            value={value || "0"}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 min-h-[40px] flex items-center">
+            {options.find((opt) => opt.value === value)?.label || "—"}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="w-full p-6 bg-white rounded-lg shadow-md mt-[11vh]">
@@ -550,7 +555,7 @@ const renderTimeSelectField = (label, name, value) => {
 
           {renderSection("Участники", [
             renderField(
-              "Количество взрослых",
+              "Общее количество",
               eventData.peopleAmount,
               "peopleAmount",
               true,
@@ -558,15 +563,7 @@ const renderTimeSelectField = (label, name, value) => {
             ),
             !eventData.isAmeteur && renderTariffField(),
             ...(eventData.isAmeteur
-              ? [
-                  renderField(
-                    "Количество детей",
-                    eventData.childrenAmount,
-                    "childrenAmount",
-                    true,
-                    "number"
-                  ),
-                ]
+              ? []
               : []),
           ])}
 
@@ -582,7 +579,7 @@ const renderTimeSelectField = (label, name, value) => {
                   ? [
                       renderSelectField(
                         "План для детей",
-                        "childPlan",
+                        "peopleTariff",
                         [
                           { value: "Старт", label: "Старт" },
                           { value: "Стандарт", label: "Стандарт" },
@@ -598,49 +595,48 @@ const renderTimeSelectField = (label, name, value) => {
                         "number"
                       ),
                       renderField(
-                        "Доп. время аренды",
+                        "Доп. время аренды (в часах)",
                         eventData.additionalTime,
                         "additionalTime",
                         true
                       ),
-                       renderField(
-                        "Ростовая кукла Лабубу",
-                        eventData.additionalTimeWithLabubu,
-                        "additionalTimeWithLabubu",
+                        renderField(
+                        "Доп. время с ведущим (в часах)",
+                        eventData.additionalTimeWithHost,
+                        "additionalTimeWithHost",
                         true
                       ),
-                       renderField(
-                        "Серебряная дискотека",
+                      renderField(
+                        "Ростовая кукла Лабубу (в минутах)",
+                        eventData.additionalTimeWithLabubu,
+                        "additionalTimeWithLabubu",
+                        true,
+                      ),
+                      renderField(
+                        "Серебряная дискотека (в минутах)",
                         eventData.silverTime,
                         "silverTime",
                         true
                       ),
-                      renderField(
-                        "Взрослых с детьми",
-                        eventData.adultsWithChildrenAmount,
-                        "adultsWithChildrenAmount",
-                        true,
-                        "number"
-                      ),
                     ]
                   : [
                       renderTimeSelectField(
-                        "Доп. аренда (часы)",
+                        "Доп. аренда (в часах)",
                         "additionalTime",
                         eventData.additionalTime
                       ),
                       renderTimeSelectField(
-                        "Доп. ведущий (часы)",
+                        "Доп. ведущий (в часах)",
                         "additionalTimeWithHost",
                         eventData.additionalTimeWithHost
                       ),
                       renderTimeSelectField(
-                        "Ростовая кукля Лабубу",
+                        "Ростовая кукля Лабубу (в минутах)",
                         "additionalTimeWithLabubu",
                         eventData.additionalTimeWithLabubu
                       ),
                       renderTimeSelectField(
-                        "Серебряная дискотека",
+                        "Серебряная дискотека (в минутах)",
                         "silverTime",
                         eventData.silverTime
                       ),
@@ -650,8 +646,8 @@ const renderTimeSelectField = (label, name, value) => {
           </div>
 
           {renderSection("Финансы", [
-            renderField("Предоплата", eventData.prepayment, "prepayment", true),
-            renderField("Скидка", eventData.discount, "discount", true),
+            renderField("Предоплата (в бел. руб.)", eventData.prepayment, "prepayment", true),
+            renderField("Скидка (в процентах)", eventData.discount, "discount", true),
           ])}
 
           {renderSection("Дополнительно", [

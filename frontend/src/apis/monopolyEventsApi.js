@@ -4,7 +4,7 @@ import { BASIC_URL } from "./userApi";
 export const monopolyEventsApi = createApi({
   reducerPath: "monopolyEventsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `http://localhost:5000/`,
+    baseUrl: `https://coursehunters.by/`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);

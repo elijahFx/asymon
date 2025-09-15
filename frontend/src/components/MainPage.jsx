@@ -303,22 +303,27 @@ export default function MainPage({ type = "monopoly" }) {
 
   // Новая функция для рендеринга временных интервалов в ячейке дня
   const renderTimeSlots = (date) => {
-    const events = getEventsForDate(date);
-    if (events.length === 0) return null;
+  const events = getEventsForDate(date);
+  if (events.length === 0) return null;
 
-    return (
-      <div className="absolute inset-0 p-1 overflow-y-auto">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            className="text-xs mb-1 p-1 rounded bg-blue-100 text-blue-800"
-          >
-            {event.title}
-          </div>
-        ))}
-      </div>
-    );
-  };
+  return (
+    <div className="p-1 space-y-1">
+      {events.slice(0, 2).map((event) => (
+        <CalendarEventComponent
+          key={event.id}
+          event={event}
+          continuesEarlier={false}
+          continuesLater={false}
+        />
+      ))}
+      {events.length > 2 && (
+        <div className="text-xs text-gray-500 text-center">
+          +{events.length - 2} ещё
+        </div>
+      )}
+    </div>
+  );
+};
 
   return (
     <div className="flex flex-row flex-1 sm:overflow-scroll max-w-full md:max-w-none">
@@ -432,10 +437,16 @@ export default function MainPage({ type = "monopoly" }) {
                   components={{
                     event: CalendarEventComponent,
                     month: {
-                      dateHeader: ({ date }) => (
-                        <div className="rbc-date-cell">
-                          <div>{date.getDate()}</div>
-                          {renderTimeSlots(date)}
+                      dateHeader: ({ date, label }) => (
+                        <div className="rbc-date-cell relative h-full">
+                          {/* Контейнер для событий */}
+                          <div className="h-full overflow-hidden">
+                            {renderTimeSlots(date)}
+                          </div>
+                          {/* Число дня - абсолютно позиционировано в правом нижнем углу */}
+                          <div className="absolute bottom-1 right-1 mt-30">
+                            {date.getDate()}
+                          </div>
                         </div>
                       ),
                     },

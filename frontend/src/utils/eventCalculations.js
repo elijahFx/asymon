@@ -1,39 +1,74 @@
 // Константы для тарифов
 const ADULT_TARIFFS = {
-  "Тариф 1": { 
-    base: 380, 
-    includedPeople: 13 
+  "Монополия": {
+    "Тариф 1": { 
+      base: 380, 
+      includedPeople: 10,
+      additionalRate: 25
+    },
+    "Тариф 2": { 
+      base: 530, 
+      includedPeople: 10,
+      additionalRate: 30
+    },
+    "Тариф 3": { 
+      base: 850, 
+      includedPeople: 10,
+      additionalRate: 40
+    }
   },
-  "Тариф 2": { 
-    base: 530, 
-    includedPeople: 13 
+  "Джуманджи": {
+    "Тариф 1": { 
+      base: 380, 
+      includedPeople: 10,
+      additionalRate: 25
+    },
+    "Тариф 2": { 
+      base: 530, 
+      includedPeople: 10,
+      additionalRate: 30
+    },
+    "Тариф 3": { 
+      base: 850, 
+      includedPeople: 10,
+      additionalRate: 40
+    }
   },
-  "Тариф 3": { 
-    base: 850, 
-    includedPeople: 13 
+  "Бункер": {
+    "Тариф 1": { 
+      base: 280, 
+      includedPeople: 10,
+      additionalRate: 20
+    },
+    "Тариф 2": { 
+      base: 390, 
+      includedPeople: 10,
+      additionalRate: 30
+    },
+    "Тариф 3": { 
+      base: 620, 
+      includedPeople: 10,
+      additionalRate: 40
+    }
   }
 };
 
 const CHILDREN_TARIFFS = {
   "Старт": { 
     base: 400, 
-    includedPeople: 13 
+    includedPeople: 13,
+    additionalRate: 25
   },
   "Стандарт": { 
     base: 580, 
-    includedPeople: 13 
+    includedPeople: 15,
+    additionalRate: 30
   },
   "ВИП": { 
     base: 760, 
-    includedPeople: 13 
+    includedPeople: 17,
+    additionalRate: 40
   }
-};
-
-// Доплаты за превышение количества людей
-const ADDITIONAL_PEOPLE_RATES = {
-  rate1: 25,  // за каждого человека свыше 13 до 15
-  rate2: 30,  // за каждого человека от 15 до 17
-  rate3: 40   // за каждого человека после 17
 };
 
 const SERVICE_RATES = {
@@ -54,6 +89,26 @@ const ADDITIONAL_SERVICES = {
 };
 
 /**
+ * Вспомогательная функция для нормализации названия пространства
+ * @param {string} place - Название пространства
+ * @returns {string} Нормализованное название
+ */
+const normalizePlaceName = (place) => {
+  if (!place) return '';
+
+  console.log(place);
+  
+  // Приводим к нижнему регистру для сравнения
+  const lowerPlace = place.toLowerCase();
+  
+  if (lowerPlace.includes('монополи')) return "Монополия";
+  if (lowerPlace.includes('джумандж')) return "Джуманджи";
+  if (lowerPlace.includes('бункер')) return "Бункер";
+  
+  return place;
+};
+
+/**
  * Расчет стоимости мероприятия
  * @param {Object} eventData - Данные мероприятия
  * @returns {Object} Результаты расчета
@@ -63,34 +118,46 @@ export const calculateEventCost = (eventData) => {
 
   let baseCost = 0;
   let additionalCost = 0;
+  let includedPeople = 0;
+  let additionalRate = 0;
   
   // Получаем базовую стоимость в зависимости от типа мероприятия и тарифа
   if (!eventData.isAmeteur) {
-    // Взрослое мероприятие
-    const tariff = ADULT_TARIFFS[eventData.peopleTariff] || {};
+    console.log(`Место: ${JSON.stringify(eventData)}, place: ${eventData.place}`);
+    
+    // Взрослое мероприятие - нормализуем название пространства
+    const normalizedPlace = normalizePlaceName(eventData.place);
+    const spaceTariffs = ADULT_TARIFFS[normalizedPlace] || {};
+    
+    console.log('Normalized place:', normalizedPlace);
+    console.log('Space tariffs:', spaceTariffs);
+    
+    const tariff = spaceTariffs[eventData.peopleTariff] || {};
     baseCost = tariff.base || 0;
+    includedPeople = tariff.includedPeople || 10;
+    additionalRate = tariff.additionalRate || 0;
   } else {
     // Детское мероприятие
     const tariff = CHILDREN_TARIFFS[eventData.peopleTariff] || {};
+    console.log(tariff);
+    
     baseCost = tariff.base || 0;
+    includedPeople = tariff.includedPeople || 13;
+    additionalRate = tariff.additionalRate || 0;
   }
 
   // Расчет доплаты за количество людей
   const peopleCount = parseInt(eventData.peopleAmount) || 0;
+
+  console.log(`Количество людей: ${eventData.peopleAmount}`);
   
-  if (peopleCount > 13) {
-    const additionalPeople = peopleCount - 13;
+  if (peopleCount > includedPeople) {
+  
     
-    if (additionalPeople <= 2) { // 14-15 человек
-      additionalCost = additionalPeople * ADDITIONAL_PEOPLE_RATES.rate1;
-    } else if (additionalPeople <= 4) { // 16-17 человек
-      additionalCost = 2 * ADDITIONAL_PEOPLE_RATES.rate1 + // за 14-15 человек
-                      (additionalPeople - 2) * ADDITIONAL_PEOPLE_RATES.rate2;
-    } else { // 18+ человек
-      additionalCost = 2 * ADDITIONAL_PEOPLE_RATES.rate1 + // за 14-15 человек
-                      2 * ADDITIONAL_PEOPLE_RATES.rate2 + // за 16-17 человек
-                      (additionalPeople - 4) * ADDITIONAL_PEOPLE_RATES.rate3;
-    }
+    const additionalPeople = peopleCount - includedPeople;
+    additionalCost = additionalPeople * additionalRate;
+
+      console.log(additionalPeople);
   }
 
   // Расчет дополнительных услуг
@@ -104,6 +171,9 @@ export const calculateEventCost = (eventData) => {
   // Расчет стоимости дополнительных услуг с Лабубу и Серебряной дискотекой
   const additionalTimeWithLabubu = parseInt(eventData.additionalTimeWithLabubu) || 0; // время в минутах
   const silverTime = parseInt(eventData.silverTime) || 0; // время в минутах
+
+  console.log(additionalTimeWithLabubu, silverTime);
+  
   
   // Расчет стоимости за Лабубу (150 руб за каждые 15 минут)
   const labubuCost = Math.ceil(additionalTimeWithLabubu / ADDITIONAL_SERVICES.labubu.interval) * ADDITIONAL_SERVICES.labubu.rate;
@@ -142,7 +212,9 @@ export const calculateEventCost = (eventData) => {
       },
       people: {
         count: peopleCount,
-        additional: additionalCost
+        additional: additionalCost,
+        included: includedPeople,
+        rate: additionalRate
       }
     }
   };
@@ -155,32 +227,9 @@ export const calculateEventCost = (eventData) => {
 export const getTariffsInfo = () => ({
   adultTariffs: ADULT_TARIFFS,
   childrenTariffs: CHILDREN_TARIFFS,
-  additionalPeopleRates: ADDITIONAL_PEOPLE_RATES,
   serviceRates: SERVICE_RATES,
   additionalServices: ADDITIONAL_SERVICES
 });
-
-/**
- * Вспомогательная функция для расчета доплаты за людей
- * @param {number} peopleCount - Общее количество людей
- * @returns {number} Доплата
- */
-export const calculateAdditionalPeopleCost = (peopleCount) => {
-  if (peopleCount <= 13) return 0;
-  
-  const additionalPeople = peopleCount - 13;
-  
-  if (additionalPeople <= 2) { // 14-15 человек
-    return additionalPeople * ADDITIONAL_PEOPLE_RATES.rate1;
-  } else if (additionalPeople <= 4) { // 16-17 человек
-    return 2 * ADDITIONAL_PEOPLE_RATES.rate1 + 
-           (additionalPeople - 2) * ADDITIONAL_PEOPLE_RATES.rate2;
-  } else { // 18+ человек
-    return 2 * ADDITIONAL_PEOPLE_RATES.rate1 + 
-           2 * ADDITIONAL_PEOPLE_RATES.rate2 + 
-           (additionalPeople - 4) * ADDITIONAL_PEOPLE_RATES.rate3;
-  }
-};
 
 /**
  * Вспомогательная функция для форматирования времени из минут

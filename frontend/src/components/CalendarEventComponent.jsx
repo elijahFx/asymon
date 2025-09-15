@@ -5,6 +5,7 @@ import { useDeleteMonopolyEventMutation } from "../apis/monopolyEventsApi";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useDeleteViewMutation } from "../apis/viewsApi";
 
 const STATUS_COLORS = {
   Новое: "bg-red-500",
@@ -19,6 +20,7 @@ const CalendarEventComponent = ({ event, view }) => {
   const [deleteBunker] = useDeleteBunkerEventMutation();
   const [deleteJungle] = useDeleteJungleEventMutation();
   const [deleteMonopoly] = useDeleteMonopolyEventMutation();
+  const [deleteView] = useDeleteViewMutation()
 
   const handleClick = (e) => {
     if (e.target.closest(".delete-btn")) return;

@@ -11,7 +11,6 @@ import {
   useUpdateViewMutation,
 } from "../../apis/viewsApi";
 
-
 const WaitingElement = ({ place }) => {
   const { id } = useParams();
   const [mode, setMode] = useState("view");
@@ -31,18 +30,18 @@ const WaitingElement = ({ place }) => {
     ? useGetViewByIdQuery(id)
     : useGetWaitingByIdQuery(id);
 
-    console.log(data);
-    
+  console.log(data);
 
   const [updateView] = useUpdateViewMutation();
   const [updateWaiting] = useUpdateWaitingMutation();
 
-  
-
   useEffect(() => {
     if (data) {
       setOriginalData(data);
-      setEventData({ ...data, time: data.start ? `${data.start} - ${data.end}` : data.time });
+      setEventData({
+        ...data,
+        time: data.start ? `${data.start} - ${data.end}` : data.time,
+      });
     }
   }, [data]);
 

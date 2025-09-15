@@ -57,13 +57,11 @@ export const weekendBackgroundColors = {
 };
 
 export const extractWaitings = (events) => {
-
   console.log(events);
-  
 
   if (!events || !Array.isArray(events)) return [];
-  
-  return events.filter(event => {
+
+  return events.filter((event) => {
     // Если у объекта нет start и end, то это waiting
     return !event.start && !event.end;
   });
@@ -71,6 +69,7 @@ export const extractWaitings = (events) => {
 
 export const styles = `
   /* Общие стили для дней с событиями */
+
   .day-with-events {
     background-color: #191A4B !important;
     color: white !important;
@@ -101,10 +100,21 @@ export const styles = `
   .rbc-off-range-bg {
     background-color: transparent;
   }
+     .rbc-date-cell .absolute {
+    position: absolute;
+    font-weight: bold;
+    bottom: 1px;
+    right: 1px;
+    z-index: 2;
+  }
   .rbc-date-cell {
     position: relative;
     height: 100%;
   }
+    .rbc-date-cell > div:first-child {
+     height: 100%;
+    padding: 4px;
+    }
   .rbc-date-cell > div {
     position: absolute;
     top: 0;

@@ -5,7 +5,7 @@ export const BASIC_URL = [0];
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `http://localhost:5000/`,
+    baseUrl: `https://coursehunters.by/`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);

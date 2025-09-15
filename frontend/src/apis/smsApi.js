@@ -4,7 +4,7 @@ import { BASIC_URL } from "./userApi";
 export const smsApi = createApi({
   reducerPath: "smsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `http://localhost:5000/sms/`,
+    baseUrl: `https://coursehunters.by/sms/`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo || '{}');

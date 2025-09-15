@@ -58,6 +58,7 @@ const AddEvent = () => {
     childAge: "",
     additionalTimeWithLabubu: "",
     silverTime: "",
+    place: "",
   };
 
   const [addBunker, { error, isLoading }] = useAddBunkerEventMutation();
@@ -97,6 +98,8 @@ const AddEvent = () => {
     formData.additionalTime,
     formData.additionalTimeWithHost,
     formData.isAmeteur,
+    formData.additionalTimeWithLabubu,
+    formData.silverTime
   ]);
 
   const validateForm = () => {
@@ -204,6 +207,10 @@ const AddEvent = () => {
 
   const handlePlaceChange = (e) => {
     setPlace(e.target.value);
+    setFormData((prev) => ({
+      ...prev,
+      place: e.target.value,
+    }));
     setErrors({});
   };
 
@@ -563,244 +570,275 @@ const AddEvent = () => {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  {ageGroup === "Детский" && (
-                    <>
-                      <div className="flex items-center py-2 group">
-                        <Gift className="text-gray-400 mr-2" />
-                        <div className="w-48 font-medium text-gray-700">
-                          План (дети)
-                          <span className="text-red-500 ml-1">*</span>:
-                        </div>
-
-                        <div className="w-full">
-                          <select
-                            name="peopleTariff"
-                            value={formData.peopleTariff || ""}
-                            onChange={handleChange}
-                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                          >
-                            <option value="">Выберите план</option>
-                            <option value="Старт">Старт</option>
-                            <option value="Стандарт">Стандарт</option>
-                            <option value="ВИП">ВИП</option>
-                          </select>
-                        </div>
+                {ageGroup === "Детский" && (
+                  <>
+                    <div className="flex items-center py-2 group">
+                      <Gift className="text-gray-400 mr-2" />
+                      <div className="w-48 font-medium text-gray-700">
+                        План (дети)
+                        <span className="text-red-500 ml-1">*</span>:
                       </div>
 
-                      {renderField(
-                        "Количество детей",
-                        formData.childrenAmount,
-                        "childrenAmount",
-                        true,
-                        "number",
-                        <Users size={16} />,
-                        true
-                      )}
-
-                      {renderField(
-                        "Возраст детей",
-                        formData.childAge,
-                        "childAge",
-                        true,
-                        "text",
-                        <User size={16} />,
-                        false
-                      )}
-
-                      {renderField(
-                        "Количество взрослых с детьми",
-                        formData.adultsWithChildrenAmount,
-                        "adultsWithChildrenAmount",
-                        true,
-                        "number",
-                        <Users size={16} />,
-                        false
-                      )}
-
-                      <div className="flex items-center py-2 group">
-                        <Clock className="text-gray-400 mr-2" size={16} />
-                        <div className="w-48 font-medium text-gray-700">
-                          Доп. время аренды (в часах):
-                        </div>
-                        <div className="w-full">
-                          <SmartTimeInput
-                            value={formData.additionalTime}
-                            onChange={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                additionalTime: value,
-                              }))
-                            }
-                          />
-                        </div>
+                      <div className="w-full">
+                        <select
+                          name="peopleTariff"
+                          value={formData.peopleTariff || ""}
+                          onChange={handleChange}
+                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        >
+                          <option value="">Выберите план</option>
+                          <option value="Старт">Старт</option>
+                          <option value="Стандарт">Стандарт</option>
+                          <option value="ВИП">ВИП</option>
+                        </select>
                       </div>
+                    </div>
 
-                      <div className="flex items-center py-2 group">
-                        <Clock className="text-gray-400 mr-2" size={16} />
-                        <div className="w-48 font-medium text-gray-700">
-                          Доп. ведущий (в часах)
-                        </div>
-                        <div className="w-full">
-                          <SmartTimeInput
-                            value={formData.additionalTimeWithHost}
-                            onChange={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                additionalTimeWithHost: value,
-                              }))
-                            }
-                            onBlur={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                additionalTimeWithHost: value,
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
+                    {renderField(
+                      "Общее количество",
+                      formData.peopleAmount,
+                      "peopleAmount",
+                      true,
+                      "number",
+                      <Users size={16} />,
+                      true
+                    )}
 
-                      <div className="flex items-center py-2 group">
-                        <Clock className="text-gray-400 mr-2" size={16} />
-                        <div className="w-48 font-medium text-gray-700">
-                          Ростовая кукла Лабубу:
-                        </div>
-                        <div className="w-full">
-                          <SmartTimeInput
-                            value={formData.additionalTimeWithLabubu}
-                            onChange={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                additionalTimeWithLabubu: value,
-                              }))
-                            }
-                            label="labubu"
-                          />
-                        </div>
-                      </div>
+                    {renderField(
+                      "Возраст детей",
+                      formData.childAge,
+                      "childAge",
+                      true,
+                      "text",
+                      <User size={16} />,
+                      false
+                    )}
 
-                      <div className="flex items-center py-2 group">
-                        <Clock className="text-gray-400 mr-2" size={16} />
-                        <div className="w-48 font-medium text-gray-700">
-                          Серебряная дискотека
-                        </div>
-                        <div className="w-full">
-                          <SmartTimeInput
-                            value={formData.silverTime}
-                            onChange={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                silverTime: value,
-                              }))
-                            }
-                            label="silver"
-                          />
-                        </div>
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Доп. время аренды (в часах):
                       </div>
-                    </>
-                  )}
-                  {renderField(
-                    "Общее количество",
-                    formData.peopleAmount,
-                    "peopleAmount",
-                    true,
-                    "number",
-                    <Users size={16} />,
-                    true
-                  )}
-                </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.additionalTime}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTime: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  {ageGroup === "Взрослый" && (
-                    <>
-                      <div className="flex items-center py-2">
-                        <div className="w-48 font-medium text-gray-700 flex items-center">
-                          <DollarSign className="mr-2" size={16} />
-                          Тариф (взрослые)
-                          <span className="text-red-500 ml-1">*</span>:
-                        </div>
-                        <div className="w-full">
-                          <select
-                            name="peopleTariff"
-                            value={formData.peopleTariff || ""}
-                            onChange={handleChange}
-                            className={`w-full border ${
-                              errors.peopleTariff
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
-                            required
-                          >
-                            <option value="">Выберите тариф</option>
-                            {ADULT_TARIFFS.map((tariff) => (
-                              <option key={tariff.value} value={tariff.value}>
-                                {tariff.label}
-                              </option>
-                            ))}
-                          </select>
-                          {errors.peopleTariff && (
-                            <div className="text-red-500 text-xs mt-1">
-                              {errors.peopleTariff}
-                            </div>
-                          )}
-                        </div>
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Доп. ведущий (в часах)
                       </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.additionalTimeWithHost}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTimeWithHost: value,
+                            }))
+                          }
+                          onBlur={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTimeWithHost: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
 
-                      {/* Добавляем поля для дополнительного времени для взрослых мероприятий */}
-                      <div className="flex items-center py-2 group">
-                        <Clock className="text-gray-400 mr-2" size={16} />
-                        <div className="w-48 font-medium text-gray-700">
-                          Доп. аренда (в часах):
-                        </div>
-                        <div className="w-full">
-                          <SmartTimeInput
-                            value={formData.additionalTime}
-                            onChange={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                additionalTime: value,
-                              }))
-                            }
-                          />
-                        </div>
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Ростовая кукла Лабубу:
                       </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.additionalTimeWithLabubu}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTimeWithLabubu: value,
+                            }))
+                          }
+                          label="labubu"
+                        />
+                      </div>
+                    </div>
 
-                      <div className="flex items-center py-2 group">
-                        <Clock className="text-gray-400 mr-2" size={16} />
-                        <div className="w-48 font-medium text-gray-700">
-                          Доп. ведущий (в часах)
-                        </div>
-                        <div className="w-full">
-                          <SmartTimeInput
-                            value={formData.additionalTimeWithHost}
-                            onChange={(value) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                additionalTimeWithHost: value,
-                              }))
-                            }
-                          />
-                        </div>
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Серебряная дискотека
                       </div>
-                    </>
-                  )}
-                  {renderField(
-                    "Скидка (%)",
-                    formData.discount,
-                    "discount",
-                    true,
-                    "number",
-                    <Percent size={16} />
-                  )}
-                  {renderField(
-                    "Предоплата",
-                    formData.prepayment,
-                    "prepayment",
-                    true,
-                    "number",
-                    <CreditCard size={16} />
-                  )}
-                </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.silverTime}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              silverTime: value,
+                            }))
+                          }
+                          label="silver"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {ageGroup === "Взрослый" && (
+                  <>
+                    <div className="flex items-center py-2">
+                      <div className="w-48 font-medium text-gray-700 flex items-center">
+                        <DollarSign className="mr-2" size={16} />
+                        Тариф (взрослые)
+                        <span className="text-red-500 ml-1">*</span>:
+                      </div>
+                      <div className="w-full">
+                        <select
+                          name="peopleTariff"
+                          value={formData.peopleTariff || ""}
+                          onChange={handleChange}
+                          className={`w-full border ${
+                            errors.peopleTariff
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
+                          required
+                        >
+                          <option value="">Выберите тариф</option>
+                          {ADULT_TARIFFS.map((tariff) => (
+                            <option key={tariff.value} value={tariff.value}>
+                              {tariff.label}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.peopleTariff && (
+                          <div className="text-red-500 text-xs mt-1">
+                            {errors.peopleTariff}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {renderField(
+                      "Общее количество",
+                      formData.peopleAmount,
+                      "peopleAmount",
+                      true,
+                      "number",
+                      <Users size={16} />,
+                      true
+                    )}
+
+                    {/* Добавляем поля для дополнительного времени для взрослых мероприятий */}
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Доп. аренда (в часах):
+                      </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.additionalTime}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTime: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Доп. ведущий (в часах)
+                      </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.additionalTimeWithHost}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTimeWithHost: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {ageGroup !== "Детский" && (
+                  <>
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Ростовая кукла Лабубу:
+                      </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.additionalTimeWithLabubu}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              additionalTimeWithLabubu: value,
+                            }))
+                          }
+                          label="labubu"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center py-2 group">
+                      <Clock className="text-gray-400 mr-2" size={16} />
+                      <div className="w-48 font-medium text-gray-700">
+                        Серебряная дискотека
+                      </div>
+                      <div className="w-full">
+                        <SmartTimeInput
+                          value={formData.silverTime}
+                          onChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              silverTime: value,
+                            }))
+                          }
+                          label="silver"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {renderField(
+                  "Скидка (%)",
+                  formData.discount,
+                  "discount",
+                  true,
+                  "number",
+                  <Percent size={16} />
+                )}
+
+                {renderField(
+                  "Предоплата",
+                  formData.prepayment,
+                  "prepayment",
+                  true,
+                  "number",
+                  <CreditCard size={16} />
+                )}
               </div>
 
               <div className="mt-4">
