@@ -99,3 +99,40 @@ export function parseDateString(dateStr) {
   // По умолчанию пытаемся создать Date
   return new Date(dateStr);
 }
+
+export const isDateInPeriod = (waitingDate, currentDate, currentView) => {
+      const dateToCheck = new Date(waitingDate);
+      
+      if (currentView === "day") {
+        // Проверка на конкретный день
+        return (
+          dateToCheck.getDate() === currentDate.getDate() &&
+          dateToCheck.getMonth() === currentDate.getMonth() &&
+          dateToCheck.getFullYear() === currentDate.getFullYear()
+        );
+      } else if (currentView === "week") {
+        // Проверка на неделю
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(
+          currentDate.getDate() - currentDate.getDay() + (currentDate.getDay() === 0 ? -6 : 1)
+        );
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        return dateToCheck >= startOfWeek && dateToCheck <= endOfWeek;
+      } else if (currentView === "month") {
+        // Проверка на месяц
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
+        
+        return dateToCheck >= startOfMonth && dateToCheck <= endOfMonth;
+      }
+      
+      return false;
+    };
+
+

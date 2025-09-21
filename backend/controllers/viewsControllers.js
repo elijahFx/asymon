@@ -178,10 +178,70 @@ const deleteView = async (req, res) => {
   }
 };
 
+// Получение просмотров для Монополии
+const getViewsFromMonopoly = async (req, res) => {
+  let connection;
+  try {
+    connection = await createDbConnection();
+
+    const [rows] = await connection.execute(
+      `SELECT * FROM views WHERE location = 'Монополия' ORDER BY createdAt DESC`
+    );
+
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching Monopoly views:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    if (connection) await connection.end();
+  }
+};
+
+// Получение просмотров для Джуманджи
+const getViewsFromJungle = async (req, res) => {
+  let connection;
+  try {
+    connection = await createDbConnection();
+
+    const [rows] = await connection.execute(
+      `SELECT * FROM views WHERE location = 'Джуманджи' ORDER BY createdAt DESC`
+    );
+
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching Jungle views:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    if (connection) await connection.end();
+  }
+};
+
+// Получение просмотров для Бункера
+const getViewsFromBunker = async (req, res) => {
+  let connection;
+  try {
+    connection = await createDbConnection();
+
+    const [rows] = await connection.execute(
+      `SELECT * FROM views WHERE location = 'Бункер' ORDER BY createdAt DESC`
+    );
+
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Error fetching Bunker views:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    if (connection) await connection.end();
+  }
+};
+
 module.exports = {
   getAllViews,
   getViewById,
   addView,
   updateView,
   deleteView,
+  getViewsFromBunker,
+  getViewsFromJungle,
+  getViewsFromMonopoly
 };

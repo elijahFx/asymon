@@ -1,10 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { BASIC_URL } from "./userApi";
+import { URL } from "../../config";
 
 export const monopolyEventsApi = createApi({
   reducerPath: "monopolyEventsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `https://coursehunters.by/`,
+    baseUrl: `${URL}`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);

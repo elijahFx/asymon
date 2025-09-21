@@ -1,11 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-const URLS = ["http://localhost:5000/", "https://coursehunters.by/"]
-export const BASIC_URL = [0];
+import { URL } from "../../config";
 
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `https://coursehunters.by/`,
+    baseUrl: `${URL}`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);

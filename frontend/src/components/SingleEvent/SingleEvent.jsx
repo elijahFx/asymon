@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
   Pen,
-  Check,
-  X,
   DollarSign,
   ChevronDown,
   ChevronUp,
+  Check,
+  X,
+  ArrowLeft,
 } from "lucide-react";
 import { useParams } from "react-router";
 import {
@@ -398,30 +399,38 @@ const SingleEvent = ({ type = "view", place }) => {
 
   return (
     <div className="w-full p-6 bg-white rounded-lg shadow-md mt-[11vh]">
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">
+      {/* Заголовок и статус */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
             {mode === "view" ? "Детали записи" : "Редактирование записи"}
           </h2>
 
-          <div
-            className={`${
-              STATUS_COLORS[eventData.status]
-            } text-white px-4 py-1 rounded-full text-sm inline-flex items-center mt-2`}
-          >
-            {eventData.status}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div
+              className={`${
+                STATUS_COLORS[eventData.status]
+              } text-white px-4 py-1 rounded-full text-sm inline-flex items-center w-fit`}
+            >
+              {eventData.status}
+            </div>
+
+            <StatusCheckboxes
+              status={eventData.status}
+              onStatusChange={handleStatusChange}
+              mode={mode}
+            />
           </div>
         </div>
-        <StatusCheckboxes
-          status={eventData.status}
-          onStatusChange={handleStatusChange}
-          mode={mode}
-        />
-        <div className="flex space-x-2">
+      </div>
+
+      {/* Кнопки действий */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-gray-50 rounded-lg border">
+        <div className="flex flex-wrap gap-2">
           {mode === "view" ? (
             <button
               onClick={handleEditEvent}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
             >
               <Pen size={16} className="mr-2" />
               Редактировать
@@ -430,27 +439,29 @@ const SingleEvent = ({ type = "view", place }) => {
             <>
               <button
                 onClick={handleUpdate}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
               >
                 <Check size={16} className="mr-2" />
                 Сохранить
               </button>
               <button
                 onClick={handleCancel}
-                className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-sm"
               >
                 <X size={16} className="mr-2" />
                 Отменить
               </button>
             </>
           )}
-          <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            Назад
-          </button>
         </div>
+
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+        >
+          <ArrowLeft size={16} className="mr-2" />
+          Назад
+        </button>
       </div>
 
       {/* Финансовый блок с возможностью сворачивания */}
@@ -562,9 +573,7 @@ const SingleEvent = ({ type = "view", place }) => {
               "number"
             ),
             !eventData.isAmeteur && renderTariffField(),
-            ...(eventData.isAmeteur
-              ? []
-              : []),
+            ...(eventData.isAmeteur ? [] : []),
           ])}
 
           <div className="p-4 bg-white rounded shadow">
@@ -600,7 +609,7 @@ const SingleEvent = ({ type = "view", place }) => {
                         "additionalTime",
                         true
                       ),
-                        renderField(
+                      renderField(
                         "Доп. время с ведущим (в часах)",
                         eventData.additionalTimeWithHost,
                         "additionalTimeWithHost",
@@ -610,7 +619,7 @@ const SingleEvent = ({ type = "view", place }) => {
                         "Ростовая кукла Лабубу (в минутах)",
                         eventData.additionalTimeWithLabubu,
                         "additionalTimeWithLabubu",
-                        true,
+                        true
                       ),
                       renderField(
                         "Серебряная дискотека (в минутах)",
@@ -646,8 +655,18 @@ const SingleEvent = ({ type = "view", place }) => {
           </div>
 
           {renderSection("Финансы", [
-            renderField("Предоплата (в бел. руб.)", eventData.prepayment, "prepayment", true),
-            renderField("Скидка (в процентах)", eventData.discount, "discount", true),
+            renderField(
+              "Предоплата (в бел. руб.)",
+              eventData.prepayment,
+              "prepayment",
+              true
+            ),
+            renderField(
+              "Скидка (в процентах)",
+              eventData.discount,
+              "discount",
+              true
+            ),
           ])}
 
           {renderSection("Дополнительно", [

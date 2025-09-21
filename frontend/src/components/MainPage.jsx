@@ -40,6 +40,13 @@ import {
 import EventTable from "./EventTable";
 import SmallWaitingList from "./WaitingList/SmallWaitingList";
 import { extractWaitings, styles } from "../utils/calendarConfig";
+import { formatDate, isDateInPeriod } from "../utils/dates";
+import {
+  useGetAllViewsQuery,
+  useGetViewsFromBunkerQuery,
+  useGetViewsFromMonopolyQuery,
+  useGetViewsFromJungleQuery,
+} from "../apis/viewsApi";
 
 const menuSize = 37;
 
@@ -52,6 +59,8 @@ export default function MainPage({ type = "monopoly" }) {
   const [namesake, setNamesake] = useState("");
   const [showBigCalendar, setShowBigCalendar] = useState(true);
   const [waitings, setWaitings] = useState([]);
+  const [views, setViews] = useState([]);
+  const [filteredViewsData, setFilteredViewsData] = useState([]);
 
   // Определяем мутации для обновления событий
   const [updateMonopolyEvent] = useUpdateMonopolyEventMutation();
@@ -82,6 +91,16 @@ export default function MainPage({ type = "monopoly" }) {
     isLoading: bunkerLoading,
     error: bunkerError,
   } = useGetBunkerEventsQuery();
+
+  const {
+    data: viewsData,
+    isLoading: viewsLoading,
+    error: viewsError,
+  } = {
+    monopoly: useGetViewsFromMonopolyQuery(),
+    jungle: useGetViewsFromJungleQuery(),
+    bunker: useGetViewsFromBunkerQuery(),
+  }[type];
 
   const currentData = {
     monopoly: monopolyData,
@@ -147,12 +166,95 @@ export default function MainPage({ type = "monopoly" }) {
   }, [type]);
 
   useEffect(() => {
-    // Извлекаем waitings из данных
-    if (currentData) {
-      const extractedWaitings = extractWaitings(currentData);
-      setWaitings(extractedWaitings);
+    if (viewsData) {
+      setViews(viewsData);
+      console.log("Просмотры для", type, ":", viewsData);
     }
-  }, [currentData]);
+  }, [viewsData, type]);
+
+ useEffect(() => {
+  if (currentData) {
+    const extractedWaitings = extractWaitings(currentData);
+    console.log('Extracted waitings:', extractedWaitings);
+
+    // Функция для проверки, входит ли дата в период
+    const isDateInPeriod = (waitingDate, currentDate, currentView) => {
+      const dateToCheck = new Date(waitingDate);
+      
+      if (currentView === "day") {
+        // Проверка на конкретный день
+        return (
+          dateToCheck.getDate() === currentDate.getDate() &&
+          dateToCheck.getMonth() === currentDate.getMonth() &&
+          dateToCheck.getFullYear() === currentDate.getFullYear()
+        );
+      } else if (currentView === "week") {
+        // Проверка на неделю
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(
+          currentDate.getDate() - currentDate.getDay() + (currentDate.getDay() === 0 ? -6 : 1)
+        );
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        return dateToCheck >= startOfWeek && dateToCheck <= endOfWeek;
+      } else if (currentView === "month") {
+        // Проверка на месяц
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
+        
+        return dateToCheck >= startOfMonth && dateToCheck <= endOfMonth;
+      }
+      
+      return false;
+    };
+
+    // Фильтруем waitings, которые входят в текущий период
+    const filteredWaitings = extractedWaitings.filter(waiting => 
+      isDateInPeriod(waiting.date, date, view)
+    );
+
+    // Фильтруем viewsData, которые входят в текущий период
+    const preFilteredViewsData = viewsData.filter(viewItem => 
+      isDateInPeriod(viewItem.date, date, view)
+    );
+
+    setFilteredViewsData(preFilteredViewsData)
+
+    console.log('Filtered waitings for current period:', filteredWaitings);
+    console.log('Filtered viewsData for current period:', preFilteredViewsData);
+
+    // Получаем информацию о текущем периоде календаря
+    let periodInfo = "";
+    if (view === "month") {
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      periodInfo = `Период: ${formatDate(firstDay)} - ${formatDate(lastDay)}`;
+    } else if (view === "week") {
+      const startOfWeek = new Date(date);
+      startOfWeek.setDate(
+        date.getDate() - date.getDay() + (date.getDay() === 0 ? -6 : 1)
+      );
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      periodInfo = `Период: ${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+    } else if (view === "day") {
+      periodInfo = `День: ${formatDate(date)}`;
+    }
+    
+    console.log("Текущий период календаря:", periodInfo);
+    console.log(`Найдено waitings в периоде: ${filteredWaitings.length} из ${extractedWaitings.length}`);
+    console.log(`Найдено viewsData в периоде: ${preFilteredViewsData.length} из ${viewsData.length}`);
+
+    setWaitings(filteredWaitings);
+    // Если у вас есть setter для viewsData, установите отфильтрованные данные
+    // setViewsData(filteredViewsData);
+  }
+}, [currentData, view, date, viewsData]); // Добавляем viewsData в зависимости
 
   useEffect(() => {
     if (currentData) {
@@ -303,27 +405,27 @@ export default function MainPage({ type = "monopoly" }) {
 
   // Новая функция для рендеринга временных интервалов в ячейке дня
   const renderTimeSlots = (date) => {
-  const events = getEventsForDate(date);
-  if (events.length === 0) return null;
+    const events = getEventsForDate(date);
+    if (events.length === 0) return null;
 
-  return (
-    <div className="p-1 space-y-1">
-      {events.slice(0, 2).map((event) => (
-        <CalendarEventComponent
-          key={event.id}
-          event={event}
-          continuesEarlier={false}
-          continuesLater={false}
-        />
-      ))}
-      {events.length > 2 && (
-        <div className="text-xs text-gray-500 text-center">
-          +{events.length - 2} ещё
-        </div>
-      )}
-    </div>
-  );
-};
+    return (
+      <div className="p-1 space-y-1">
+        {events.slice(0, 2).map((event) => (
+          <CalendarEventComponent
+            key={event.id}
+            event={event}
+            continuesEarlier={false}
+            continuesLater={false}
+          />
+        ))}
+        {events.length > 2 && (
+          <div className="text-xs text-gray-500 text-center">
+            +{events.length - 2} ещё
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-row flex-1 sm:overflow-scroll max-w-full md:max-w-none">
@@ -389,6 +491,7 @@ export default function MainPage({ type = "monopoly" }) {
             <div className="overflow-x-auto">
               <div className="min-w-[300px]">
                 <DnDCalendar
+                views={['month', 'week', 'day']}
                   min={new Date(0, 0, 0, 0, 0)}
                   max={new Date(0, 0, 0, 23, 59)}
                   formats={{
@@ -444,7 +547,7 @@ export default function MainPage({ type = "monopoly" }) {
                             {renderTimeSlots(date)}
                           </div>
                           {/* Число дня - абсолютно позиционировано в правом нижнем углу */}
-                          <div className="absolute bottom-1 right-1 mt-30">
+                          <div className="absolute bottom-1 right-1 mt-27">
                             {date.getDate()}
                           </div>
                         </div>
@@ -477,7 +580,10 @@ export default function MainPage({ type = "monopoly" }) {
             </div>
           )}
         </div>
+        {/* Просомотры */}
         <SmallWaitingList waitings={waitings} />
+        {/* Лист ожидания */}
+        <SmallWaitingList waitings={filteredViewsData} place="waitings" />
         <Legend type={type} />
       </main>
     </div>

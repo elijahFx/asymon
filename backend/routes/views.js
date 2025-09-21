@@ -6,6 +6,9 @@ const {
   addView,
   deleteView,
   updateView,
+  getViewsFromMonopoly,
+  getViewsFromJungle,
+  getViewsFromBunker,
 } = require("../controllers/viewsControllers.js");
 const requireAuth = require("../requireAuth");
 
@@ -14,6 +17,13 @@ function funFunction() {
 }
 
 const router = express.Router();
+
+// Новые маршруты для получения просмотров по локациям
+router.get("/monopoly", requireAuth, getViewsFromMonopoly);
+
+router.get("/jungle", requireAuth, getViewsFromJungle);
+
+router.get("/bunker", requireAuth, getViewsFromBunker);
 
 router.post("/date", requireAuth, funFunction);
 

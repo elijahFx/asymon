@@ -1,10 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { BASIC_URL } from "./userApi";
+import { URL } from "../../config";
 
 export const viewsApi = createApi({
   reducerPath: "viewsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `https://coursehunters.by/views`,
+    baseUrl: `${URL}views`,
     prepareHeaders: (headers) => {
       const userInfo = localStorage.getItem("userASY");
       const userInfoJSON = JSON.parse(userInfo);
@@ -58,6 +58,22 @@ export const viewsApi = createApi({
       }),
       providesTags: ["Views"],
     }),
+
+    // Новые запросы для получения просмотров по локациям
+    getViewsFromMonopoly: builder.query({
+      query: () => "/monopoly",
+      providesTags: ["Views"],
+    }),
+
+    getViewsFromJungle: builder.query({
+      query: () => "/jungle",
+      providesTags: ["Views"],
+    }),
+
+    getViewsFromBunker: builder.query({
+      query: () => "/bunker",
+      providesTags: ["Views"],
+    }),
   }),
 });
 
@@ -67,5 +83,8 @@ export const {
   useAddViewMutation,
   useUpdateViewMutation,
   useDeleteViewMutation,
-  useGetViewsByDateQuery
+  useGetViewsByDateQuery,
+  useGetViewsFromMonopolyQuery,
+  useGetViewsFromJungleQuery,
+  useGetViewsFromBunkerQuery
 } = viewsApi;

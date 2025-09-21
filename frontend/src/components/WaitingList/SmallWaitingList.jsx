@@ -2,7 +2,7 @@ import React from "react";
 import WaitingRow from "./WaitingRow";
 import Pagination from "../Pagination";
 
-const SmallWaitingList = ({ place, selectedDate, waitings = [] }) => {
+const SmallWaitingList = ({ place, selectedDate, waitings = [], type }) => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage] = React.useState(10);
 
@@ -27,7 +27,7 @@ const SmallWaitingList = ({ place, selectedDate, waitings = [] }) => {
   };
 
   return (
-    <div className={`container px-4 py-6 max-w-full`}>
+    <div className={`container px-4 py-2 max-w-full`}>
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">

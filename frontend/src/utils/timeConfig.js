@@ -6,6 +6,17 @@ export const TIME_OPTIONS = [
   { value: "2", label: "2 часа" },
   { value: "2.5", label: "2.5 часа" },
   { value: "3", label: "3 часа" },
+  { value: "3.5", label: "3.5 часов" },
+  { value: "4", label: "4 часа" },
+  { value: "4.5", label: "4.5 часов" },
+  { value: "5", label: "5 часов" },
+  { value: "5.5", label: "5.5 часов" },
+  { value: "6", label: "6 часов" },
+  { value: "6.5", label: "6.5 часов" },
+  { value: "7", label: "7 часов" },
+  { value: "7.5", label: "7.5 часов" },
+  { value: "8", label: "8 часов" },
+  { value: "8.5", label: "8.5 часов" },
 ];
 
 export const TIME_OPTIONS_LABUBU = [
@@ -21,7 +32,11 @@ export const TIME_OPTIONS_LABUBU = [
   { value: "135", label: "2 ч 15 мин" },
   { value: "150", label: "2 ч 30 мин" },
   { value: "165", label: "2 ч 45 мин" },
-  { value: "180", label: "3 ч" }
+  { value: "180", label: "3 ч" },
+  { value: "195", label: "3 ч 15 мин" },
+  { value: "210", label: "3 ч 30 мин" },
+  { value: "225", label: "3 ч 45 мин" },
+  { value: "240", label: "4 ч" },
 ];
 
 export const TIME_OPTIONS_SILVER = [
@@ -37,9 +52,8 @@ export const TIME_OPTIONS_SILVER = [
   { value: "270", label: "4 ч 30 мин" },
   { value: "300", label: "5 ч" },
   { value: "330", label: "5 ч 30 мин" },
-  { value: "360", label: "6 ч" }
+  { value: "360", label: "6 ч" },
 ];
-
 
 // Добавляем константу с вариантами мессенджеров
 export const MESSENGERS = [
@@ -54,4 +68,3 @@ export const ADULT_TARIFFS = [
   { value: "Тариф 2", label: "Тариф 2", coefficient: 1.2 },
   { value: "Тариф 3", label: "Тариф 3", coefficient: 1.5 },
 ];
-
