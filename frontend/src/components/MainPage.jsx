@@ -219,7 +219,7 @@ export default function MainPage({ type = "monopoly" }) {
     );
 
     // Фильтруем viewsData, которые входят в текущий период
-    const preFilteredViewsData = viewsData.filter(viewItem => 
+    const preFilteredViewsData = viewsData?.filter(viewItem => 
       isDateInPeriod(viewItem.date, date, view)
     );
 
@@ -581,9 +581,9 @@ export default function MainPage({ type = "monopoly" }) {
           )}
         </div>
         {/* Просомотры */}
-        <SmallWaitingList waitings={waitings} />
+        <SmallWaitingList waitings={waitings} place="waitings"/>
         {/* Лист ожидания */}
-        <SmallWaitingList waitings={filteredViewsData} place="waitings" />
+        <SmallWaitingList waitings={filteredViewsData}  />
         <Legend type={type} />
       </main>
     </div>

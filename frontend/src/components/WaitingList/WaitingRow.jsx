@@ -5,6 +5,9 @@ import { Phone, User, Calendar, Clock } from "lucide-react";
 const WaitingRow = ({ item, formatDate, type, place, time }) => {
   // Определяем маршрут для редактирования
   const getEditRoute = () => {
+    if(!place) {
+      type = "views"
+    }
     return `/${type}/${item.id}`;
   };
 
@@ -56,8 +59,8 @@ const WaitingRow = ({ item, formatDate, type, place, time }) => {
           {formatDate(item.createdAt)}
         </div>
       </td>
-      
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+
+      {place !== "waitings" && <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         [
         <Link
           to={getEditRoute()}
@@ -66,7 +69,9 @@ const WaitingRow = ({ item, formatDate, type, place, time }) => {
           Просмотр
         </Link>
         ]
-      </td>
+      </td>}
+      
+      
     </tr>
   );
 };

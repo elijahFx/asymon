@@ -7,7 +7,6 @@ const SmallWaitingList = ({ place, selectedDate, waitings = [], type }) => {
   const [itemsPerPage] = React.useState(10);
 
   console.log(waitings);
-  
 
   // Функция для форматирования даты
   const formatDate = (dateString) => {
@@ -31,21 +30,24 @@ const SmallWaitingList = ({ place, selectedDate, waitings = [], type }) => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">
-            {selectedDate ? (
-              `${place === "waitings" ? "Лист ожидания" : "Просмотры"} на ${formatDate(selectedDate)}`
-            ) : (
-              place === "waitings" ? "Лист ожидания" : "Просмотры"
-            )}
+            {selectedDate
+              ? `${
+                  place === "waitings" ? "Лист ожидания" : "Просмотры"
+                } на ${formatDate(selectedDate)}`
+              : place === "waitings"
+              ? "Лист ожидания"
+              : "Просмотры"}
           </h2>
         </div>
 
         <div className="overflow-x-auto">
           {waitings.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {selectedDate 
-                ? `В ${place === "waitings" ? "листе ожидания" : "просмотрах"} на этот день пусто`
-                : "Нет данных для отображения"
-              }
+              {selectedDate
+                ? `В ${
+                    place === "waitings" ? "листе ожидания" : "просмотрах"
+                  } на этот день пусто`
+                : "Нет данных для отображения"}
             </div>
           ) : (
             <>
@@ -69,9 +71,11 @@ const SmallWaitingList = ({ place, selectedDate, waitings = [], type }) => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Добавлено
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Действия
-                    </th>
+                    {place !== "waitings" && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Действия
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">

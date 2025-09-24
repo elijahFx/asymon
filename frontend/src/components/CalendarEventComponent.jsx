@@ -8,10 +8,10 @@ import "react-toastify/dist/ReactToastify.css";
 import { useDeleteViewMutation } from "../apis/viewsApi";
 
 const STATUS_COLORS = {
-  Новое: "bg-red-500",
+  "Новое": "bg-red-500",
   "Ждем предоплату": "bg-orange-400",
   "Предоплата внесена": "bg-[#3174AD]",
-  Просмотр: "gray",
+  "Просмотр": "gray",
 };
 
 const CalendarEventComponent = ({ event, view }) => {
@@ -20,7 +20,7 @@ const CalendarEventComponent = ({ event, view }) => {
   const [deleteBunker] = useDeleteBunkerEventMutation();
   const [deleteJungle] = useDeleteJungleEventMutation();
   const [deleteMonopoly] = useDeleteMonopolyEventMutation();
-  const [deleteView] = useDeleteViewMutation()
+  const [deleteView] = useDeleteViewMutation();
 
   const handleClick = (e) => {
     if (e.target.closest(".delete-btn")) return;
@@ -95,6 +95,9 @@ const CalendarEventComponent = ({ event, view }) => {
         case "bunker":
           result = await deleteBunker(event.id);
           break;
+
+        case "view":
+          result = await deleteView(event.id);
         case "monopoly":
         default:
           result = await deleteMonopoly(event.id);

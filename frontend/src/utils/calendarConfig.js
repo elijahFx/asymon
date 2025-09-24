@@ -144,7 +144,7 @@ export const styles = `
     min-height: 800px; /* Общая высота недельного вида */
   }
   .rbc-time-header {
-    height: 10px; /* Высота заголовка */
+    height: 1px; /* Высота заголовка */
   }
   .rbc-time-header-cell {
     height: 80px !important;
